@@ -12,6 +12,21 @@ load_dotenv()
 
 app = Flask(__name__)
 
+@app.route("/check")
+def check():
+    import shutil
+    sf = shutil.which("stockfish")
+    paths_checked = [
+        "/usr/bin/stockfish",
+        "/usr/games/stockfish", 
+        "/nix/var/nix/profiles/default/bin/stockfish",
+    ]
+    exists = {p: os.path.exists(p) for p in paths_checked}
+    return jsonify({
+        "shutil_which": sf,
+        "paths": exists
+    })
+
 def get_stockfish_path():
     sf = shutil.which("stockfish")
     if sf:
