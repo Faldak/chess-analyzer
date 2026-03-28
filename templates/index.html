@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Analyzer — ИИ Анализ Партий</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #c9a84c;
+    --accent2: #e8c97a;
+    --text: #f0ede8;
+    --text-muted: #7a7a8a;
+    --white-sq: #f0d9b5;
+    --black-sq: #b58863;
+    --highlight: rgba(201,168,76,0.35);
+    --selected: rgba(201,168,76,0.55);
+    --danger: #e05a5a;
+    --success: #5ab87a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      radial-gradient(circle at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(201,168,76,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .logo-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--accent2);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-header .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .panel-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .panel-body { padding: 20px; }
+
+  /* PGN input */
+  .pgn-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+    display: block;
+    letter-spacing: 0.3px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    resize: vertical;
+    min-height: 140px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: rgba(201,168,76,0.5); }
+  textarea::placeholder { color: var(--text-muted); }
+
+  .btn-analyze {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-analyze:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-analyze:active { transform: translateY(0); }
+  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Players info */
+  .players-bar {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .player-color.white { background: #f0ede8; }
+  .player-color.black { background: #1a1a1a; }
+
+  .player-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .result-badge {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+
+  /* Moves list */
+  .moves-container {
+    display: none;
+  }
+
+  .moves-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 2px;
+    max-height: 280px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .moves-grid::-webkit-scrollbar { width: 4px; }
+  .moves-grid::-webkit-scrollbar-track { background: transparent; }
+  .moves-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .move-num {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .move-cell {
+    background: var(--surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+  }
+
+  .move-cell:hover { background: rgba(201,168,76,0.1); color: var(--accent2); }
+  .move-cell.active { background: rgba(201,168,76,0.2); color: var(--accent); }
+  .move-cell.empty { cursor: default; color: transparent; }
+  .move-cell.empty:hover { background: var(--surface); }
+
+  /* Chessboard */
+  .board-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .board-container {
+    display: none;
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .board-placeholder {
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-muted);
+  }
+
+  .board-placeholder .icon { font-size: 40px; opacity: 0.4; }
+  .board-placeholder p { font-size: 13px; text-align: center; line-height: 1.5; }
+
+  #chessboard {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+  }
+
+  .sq {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(18px, 3.5vw, 32px);
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+    user-select: none;
+  }
+
+  .sq.light { background: var(--white-sq); }
+  .sq.dark { background: var(--black-sq); }
+  .sq.highlight { background: var(--highlight) !important; }
+  .sq.selected { background: var(--selected) !important; }
+
+  .sq-label {
+    position: absolute;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    opacity: 0.55;
+  }
+
+  .sq-label.rank { bottom: 2px; right: 3px; }
+  .sq-label.file { top: 2px; left: 3px; }
+
+  /* Nav buttons */
+  .board-nav {
+    display: none;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .nav-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .nav-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .move-counter {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Analysis panel */
+  .analysis-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 120px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .analysis-box.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .analysis-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .analyze-move-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    display: none;
+  }
+
+  .analyze-move-btn:hover { background: rgba(201,168,76,0.1); }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(224,90,90,0.1);
+    border: 1px solid rgba(224,90,90,0.3);
+    color: #e05a5a;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px 0 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    border-top: 1px solid var(--border);
+    margin-top: 36px;
+  }
+
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .header-inner .badge { display: none; }
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo-icon">♟</div>
+      <div class="logo-text">
+        <h1>Chess Analyzer</h1>
+        <p>ИИ-анализ шахматных партий</p>
+      </div>
+      <div class="badge">AI POWERED</div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <!-- Left panel -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- PGN Input -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="dot"></div>
+          <h2>Вставить партию</h2>
+        </div>
+        <div class="panel-body">
+          <label class="pgn-label">// Формат PGN (с chess.com, lichess.org)</label>
+          <textarea id="pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6...
+
+Или вставь полный PGN с заголовками"></textarea>
+          <div id="error-msg" class="error-msg"></div>
+          <button class="btn-analyze" id="analyze-btn" onclick="analyzeGame()">
+            <span id="btn-text">♟ Анализировать партию</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Moves list -->
+      <div class="panel moves-container" id="moves-panel">
+        <div class="panel-header">
+          <div class="dot"></div>
+          <h2>Ходы партии</h2>
+        </div>
+        <div class="panel-body" style="padding:12px;">
+          <div class="players-bar" id="players-bar">
+            <div class="player">
+              <div class="player-color white"></div>
+              <div class="player-name" id="white-name">Белые</div>
+            </div>
+            <div class="result-badge" id="result-badge">*</div>
+            <div class="player">
+              <div class="player-color black"></div>
+              <div class="player-name" id="black-name">Чёрные</div>
+            </div>
+          </div>
+          <div class="moves-grid" id="moves-grid"></div>
+        </div>
+      </div>
+
+      <!-- Analysis -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="dot"></div>
+          <h2>Анализ ИИ</h2>
+        </div>
+        <div class="panel-body">
+          <div class="analysis-box empty" id="analysis-box">
+            <span>Загрузи партию и нажми «Анализировать»</span>
+          </div>
+          <button class="analyze-move-btn" id="analyze-move-btn" onclick="analyzeSingleMove()">
+            Объяснить выбранный ход
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right panel: Board -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="dot"></div>
+        <h2>Доска</h2>
+      </div>
+      <div class="panel-body board-wrapper">
+        <div class="board-placeholder" id="board-placeholder">
+          <div class="icon">♜</div>
+          <p>Доска появится<br>после анализа партии</p>
+        </div>
+        <div class="board-container" id="board-container">
+          <div id="chessboard"></div>
+        </div>
+        <div class="board-nav" id="board-nav">
+          <button class="nav-btn" id="btn-first" onclick="goToMove(0)">⟪</button>
+          <button class="nav-btn" id="btn-prev" onclick="prevMove()">‹ Назад</button>
+          <div class="move-counter" id="move-counter">0 / 0</div>
+          <button class="nav-btn" id="btn-next" onclick="nextMove()">Вперёд ›</button>
+          <button class="nav-btn" id="btn-last" onclick="goToMove(allMoves.length)">⟫</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>chess-analyzer · powered by groq + llama · made with ♟</footer>
+</div>
+
+<script>
+const PIECES = {
+  'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
+  'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
+};
+
+let allMoves = [];
+let currentMoveIndex = 0;
+let selectedMoveIndex = null;
+let boardStates = [];
+
+function startPos() {
+  return {
+    a8:'r',b8:'n',c8:'b',d8:'q',e8:'k',f8:'b',g8:'n',h8:'r',
+    a7:'p',b7:'p',c7:'p',d7:'p',e7:'p',f7:'p',g7:'p',h7:'p',
+    a2:'P',b2:'P',c2:'P',d2:'P',e2:'P',f2:'P',g2:'P',h2:'P',
+    a1:'R',b1:'N',c1:'B',d1:'Q',e1:'K',f1:'B',g1:'N',h1:'R'
+  };
+}
+
+function cloneBoard(b) { return Object.assign({}, b); }
+
+const FILES = ['a','b','c','d','e','f','g','h'];
+const RANKS = [8,7,6,5,4,3,2,1];
+
+function renderBoard(boardState, lastFrom, lastTo) {
+  const el = document.getElementById('chessboard');
+  el.innerHTML = '';
+  for (let r of RANKS) {
+    for (let f of FILES) {
+      const sq = f + r;
+      const isLight = (FILES.indexOf(f) + r) % 2 === 1;
+      const div = document.createElement('div');
+      div.className = 'sq ' + (isLight ? 'light' : 'dark');
+      div.dataset.sq = sq;
+
+      if (sq === lastFrom || sq === lastTo) div.classList.add('highlight');
+
+      const piece = boardState[sq];
+      if (piece) div.textContent = PIECES[piece] || '';
+
+      if (r === 1) {
+        const fl = document.createElement('span');
+        fl.className = 'sq-label file';
+        fl.textContent = f;
+        fl.style.color = isLight ? '#b58863' : '#f0d9b5';
+        div.appendChild(fl);
+      }
+      if (f === 'h') {
+        const rl = document.createElement('span');
+        rl.className = 'sq-label rank';
+        rl.textContent = r;
+        rl.style.color = isLight ? '#b58863' : '#f0d9b5';
+        div.appendChild(rl);
+      }
+
+      el.appendChild(div);
+    }
+  }
+}
+
+function applyMove(board, sanMove, isWhite) {
+  const b = cloneBoard(board);
+  const san = sanMove.replace(/[+#!?]/g, '');
+
+  let fromSq = null, toSq = null;
+
+  // Castling
+  if (san === 'O-O') {
+    if (isWhite) { b['g1'] = 'K'; b['f1'] = 'R'; delete b['e1']; delete b['h1']; fromSq='e1'; toSq='g1'; }
+    else { b['g8'] = 'k'; b['f8'] = 'r'; delete b['e8']; delete b['h8']; fromSq='e8'; toSq='g8'; }
+    return { board: b, from: fromSq, to: toSq };
+  }
+  if (san === 'O-O-O') {
+    if (isWhite) { b['c1'] = 'K'; b['d1'] = 'R'; delete b['e1']; delete b['a1']; fromSq='e1'; toSq='c1'; }
+    else { b['c8'] = 'k'; b['d8'] = 'r'; delete b['e8']; delete b['a8']; fromSq='e8'; toSq='c8'; }
+    return { board: b, from: fromSq, to: toSq };
+  }
+
+  const promMatch = san.match(/=([QRBN])$/);
+  const promPiece = promMatch ? promMatch[1] : null;
+  const cleanSan = san.replace(/=[QRBN]$/, '');
+
+  // Determine piece type
+  let pieceType = 'P';
+  let rest = cleanSan;
+  if ('KQRBN'.includes(cleanSan[0])) { pieceType = cleanSan[0]; rest = cleanSan.slice(1); }
+
+  const piece = isWhite ? pieceType : pieceType.toLowerCase();
+
+  // Parse destination
+  const destMatch = rest.match(/([a-h][1-8])$/);
+  if (!destMatch) return { board: b, from: null, to: null };
+  toSq = destMatch[1];
+
+  // Disambiguation
+  const disambig = rest.slice(0, rest.length - 2).replace('x', '');
+
+  // Find the piece
+  for (const [sq, p] of Object.entries(b)) {
+    if (p !== piece) continue;
+    const sf = sq[0], sr = parseInt(sq[1]);
+    const tf = toSq[0], tr = parseInt(toSq[1]);
+
+    if (disambig) {
+      if (disambig.length === 2 && sq !== disambig) continue;
+      if (disambig.length === 1) {
+        if (/[a-h]/.test(disambig) && sf !== disambig) continue;
+        if (/[1-8]/.test(disambig) && sr !== parseInt(disambig)) continue;
+      }
+    }
+
+    let valid = false;
+    if (pieceType === 'P') {
+      const dir = isWhite ? 1 : -1;
+      const startRank = isWhite ? 2 : 7;
+      const cap = rest.includes('x');
+      if (!cap && sf === tf && tr === sr + dir) valid = true;
+      if (!cap && sf === tf && sr === startRank && tr === sr + 2*dir && !b[tf+(sr+dir)]) valid = true;
+      if (cap && Math.abs(FILES.indexOf(tf)-FILES.indexOf(sf)) === 1 && tr === sr + dir) valid = true;
+    } else if (pieceType === 'N') {
+      const df = Math.abs(FILES.indexOf(tf)-FILES.indexOf(sf));
+      const dr = Math.abs(tr-sr);
+      valid = (df===1&&dr===2)||(df===2&&dr===1);
+    } else if (pieceType === 'B') {
+      valid = Math.abs(FILES.indexOf(tf)-FILES.indexOf(sf)) === Math.abs(tr-sr);
+    } else if (pieceType === 'R') {
+      valid = sf===tf || sr===tr;
+    } else if (pieceType === 'Q') {
+      const df = Math.abs(FILES.indexOf(tf)-FILES.indexOf(sf));
+      const dr = Math.abs(tr-sr);
+      valid = sf===tf || sr===tr || df===dr;
+    } else if (pieceType === 'K') {
+      const df = Math.abs(FILES.indexOf(tf)-FILES.indexOf(sf));
+      const dr = Math.abs(tr-sr);
+      valid = df<=1 && dr<=1;
+    }
+
+    if (valid) { fromSq = sq; break; }
+  }
+
+  if (fromSq) {
+    // En passant
+    if (pieceType === 'P' && rest.includes('x') && !b[toSq]) {
+      const epRank = isWhite ? parseInt(toSq[1])-1 : parseInt(toSq[1])+1;
+      delete b[toSq[0]+epRank];
+    }
+    b[toSq] = promPiece ? (isWhite ? promPiece : promPiece.toLowerCase()) : piece;
+    delete b[fromSq];
+  }
+
+  return { board: b, from: fromSq, to: toSq };
+}
+
+function buildBoardStates(moves) {
+  const states = [{ board: startPos(), from: null, to: null }];
+  let board = startPos();
+  for (let i = 0; i < moves.length; i++) {
+    const isWhite = i % 2 === 0;
+    const result = applyMove(board, moves[i], isWhite);
+    board = result.board;
+    states.push({ board: cloneBoard(board), from: result.from, to: result.to });
+  }
+  return states;
+}
+
+function goToMove(idx) {
+  currentMoveIndex = Math.max(0, Math.min(idx, allMoves.length));
+  updateBoard();
+  updateMoveHighlight();
+  updateNav();
+}
+
+function prevMove() { goToMove(currentMoveIndex - 1); }
+function nextMove() { goToMove(currentMoveIndex + 1); }
+
+function updateBoard() {
+  const state = boardStates[currentMoveIndex];
+  if (state) renderBoard(state.board, state.from, state.to);
+}
+
+function updateMoveHighlight() {
+  document.querySelectorAll('.move-cell').forEach(c => c.classList.remove('active'));
+  if (currentMoveIndex > 0) {
+    const cell = document.querySelector(`.move-cell[data-move-index="${currentMoveIndex-1}"]`);
+    if (cell) { cell.classList.add('active'); cell.scrollIntoView({ block: 'nearest' }); }
+  }
+}
+
+function updateNav() {
+  document.getElementById('btn-first').disabled = currentMoveIndex === 0;
+  document.getElementById('btn-prev').disabled = currentMoveIndex === 0;
+  document.getElementById('btn-next').disabled = currentMoveIndex === allMoves.length;
+  document.getElementById('btn-last').disabled = currentMoveIndex === allMoves.length;
+  document.getElementById('move-counter').textContent = currentMoveIndex + ' / ' + allMoves.length;
+}
+
+function selectMove(idx) {
+  selectedMoveIndex = idx;
+  goToMove(idx + 1);
+  document.getElementById('analyze-move-btn').style.display = 'block';
+}
+
+function setAnalysis(text) {
+  const box = document.getElementById('analysis-box');
+  box.className = 'analysis-box fade-in';
+  box.textContent = text;
+}
+
+function setAnalysisLoading() {
+  const box = document.getElementById('analysis-box');
+  box.className = 'analysis-box';
+  box.innerHTML = '<div class="analysis-loading"><div class="spinner"></div><span>ИИ анализирует...</span></div>';
+}
+
+async function analyzeGame() {
+  const pgn = document.getElementById('pgn-input').value.trim();
+  const btn = document.getElementById('analyze-btn');
+  const errEl = document.getElementById('error-msg');
+
+  errEl.style.display = 'none';
+  if (!pgn) { errEl.textContent = 'Вставь PGN партии'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  document.getElementById('btn-text').textContent = '⏳ Анализируем...';
+  setAnalysisLoading();
+
+  try {
+    const res = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pgn })
+    });
+    const data = await res.json();
+
+    if (data.error) { errEl.textContent = data.error; errEl.style.display = 'block'; setAnalysis(''); return; }
+
+    allMoves = data.moves;
+    boardStates = buildBoardStates(allMoves);
+    currentMoveIndex = 0;
+    selectedMoveIndex = null;
+
+    // Show players
+    document.getElementById('white-name').textContent = data.white;
+    document.getElementById('black-name').textContent = data.black;
+    document.getElementById('result-badge').textContent = data.result;
+    document.getElementById('players-bar').style.display = 'flex';
+
+    // Build moves grid
+    const grid = document.getElementById('moves-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < allMoves.length; i += 2) {
+      const num = document.createElement('div');
+      num.className = 'move-num';
+      num.textContent = (i/2+1) + '.';
+      grid.appendChild(num);
+
+      const w = document.createElement('div');
+      w.className = 'move-cell';
+      w.dataset.moveIndex = i;
+      w.textContent = allMoves[i];
+      w.onclick = () => selectMove(i);
+      grid.appendChild(w);
+
+      const b = document.createElement('div');
+      b.className = 'move-cell' + (i+1 >= allMoves.length ? ' empty' : '');
+      if (i+1 < allMoves.length) {
+        b.dataset.moveIndex = i+1;
+        b.textContent = allMoves[i+1];
+        b.onclick = () => selectMove(i+1);
+      }
+      grid.appendChild(b);
+    }
+
+    // Show panels
+    document.getElementById('moves-panel').style.display = 'block';
+    document.getElementById('board-placeholder').style.display = 'none';
+    document.getElementById('board-container').style.display = 'block';
+    document.getElementById('board-nav').style.display = 'flex';
+
+    updateBoard();
+    updateNav();
+    setAnalysis(data.analysis);
+
+  } catch(e) {
+    errEl.textContent = 'Ошибка соединения с сервером';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btn-text').textContent = '♟ Анализировать партию';
+  }
+}
+
+async function analyzeSingleMove() {
+  if (selectedMoveIndex === null) return;
+  const pgn = document.getElementById('pgn-input').value.trim();
+  setAnalysisLoading();
+
+  try {
+    const res = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pgn, move_index: selectedMoveIndex })
+    });
+    const data = await res.json();
+    if (data.error) { setAnalysis('Ошибка: ' + data.error); return; }
+    setAnalysis(data.analysis);
+  } catch(e) {
+    setAnalysis('Ошибка соединения');
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft') prevMove();
+  if (e.key === 'ArrowRight') nextMove();
+});
+</script>
+</body>
+</html>

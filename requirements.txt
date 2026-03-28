@@ -1,0 +1,4 @@
+flask
+python-chess
+groq
+python-dotenv
