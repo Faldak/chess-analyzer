@@ -32,13 +32,14 @@ def check():
     })
 
 def get_stockfish_path():
+    import shutil
     sf = shutil.which("stockfish")
     if sf:
         return sf
     paths = [
+        "/usr/local/bin/stockfish",
         "/usr/bin/stockfish",
         "/usr/games/stockfish",
-        "/nix/var/nix/profiles/default/bin/stockfish",
         "stockfish.exe",
     ]
     for p in paths:
