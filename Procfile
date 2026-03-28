@@ -1,1 +1,1 @@
-web: apt-get install -y stockfish && gunicorn app:app
+web: bash setup.sh && gunicorn app:app
