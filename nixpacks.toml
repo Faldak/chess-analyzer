@@ -1,2 +1,5 @@
 [phases.setup]
-nixPkgs = ["stockfish"]
+nixPkgs = ["stockfish", "python310"]
+
+[start]
+cmd = "gunicorn app:app"
