@@ -15,16 +15,20 @@ app = Flask(__name__)
 @app.route("/check")
 def check():
     import shutil
+    import subprocess
     sf = shutil.which("stockfish")
-    paths_checked = [
-        "/usr/bin/stockfish",
-        "/usr/games/stockfish", 
-        "/nix/var/nix/profiles/default/bin/stockfish",
-    ]
-    exists = {p: os.path.exists(p) for p in paths_checked}
+    
+    # Ищем везде
+    try:
+        find_result = subprocess.run(["find", "/", "-name", "stockfish", "-type", "f"], 
+                                      capture_output=True, text=True, timeout=10)
+        found_files = find_result.stdout.strip()
+    except:
+        found_files = "ошибка поиска"
+    
     return jsonify({
         "shutil_which": sf,
-        "paths": exists
+        "find_result": found_files
     })
 
 def get_stockfish_path():
