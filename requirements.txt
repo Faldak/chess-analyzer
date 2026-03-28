@@ -2,3 +2,4 @@ flask
 python-chess
 groq
 python-dotenv
+gunicorn 
