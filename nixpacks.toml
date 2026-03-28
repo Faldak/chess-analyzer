@@ -1,5 +1,2 @@
 [phases.setup]
-nixPkgs = ["stockfish", "python310"]
-
-[start]
-cmd = "gunicorn app:app"
+aptPkgs = ["stockfish"]
