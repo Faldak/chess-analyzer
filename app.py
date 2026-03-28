@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 @app.route("/")
 def index():
@@ -16,6 +15,7 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     data = request.get_json()
     pgn_text = data.get("pgn", "").strip()
     move_index = data.get("move_index", None)
