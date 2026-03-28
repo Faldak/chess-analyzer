@@ -1,1 +1,1 @@
-web: gunicorn app:app 
+web: apt-get install -y stockfish && gunicorn app:app
