@@ -157,6 +157,32 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:24px;}
+@media(max-width:768px){
+  .container{padding:0 12px;}
+  header{padding:12px 0 10px;margin-bottom:14px;}
+  .lt h1{font-size:17px;}
+  .lt p{display:none;}
+  #game-screen{display:flex !important;flex-direction:column;gap:12px;}
+  .board-area{width:100%;order:1;}
+  .panel[style*="height:fit-content"]{order:2;}
+  .game-info{order:3;display:flex;flex-direction:column;gap:10px;}
+  #chessboard{width:calc(100vw - 56px) !important;}
+  .player-bar{width:calc(100vw - 56px) !important;}
+  .ctrl-row{width:calc(100vw - 56px) !important;}
+  .eval-bar-wrap{height:calc(100vw - 56px) !important;}
+  .chat-box{max-height:200px;}
+  .msg-bubble{max-width:calc(100vw - 100px);font-size:11px;}
+  .setup-card{padding:20px;}
+  .color-btn{padding:10px 6px;font-size:12px;}
+  .color-btn .icon{font-size:22px;}
+  .level-btn{padding:8px 4px;}
+  .stat-val{font-size:15px;}
+  .moves-list{max-height:150px;}
+  .gameover-card{padding:24px 16px;}
+  .gameover-title{font-size:20px;}
+  .pb{padding:10px;}
+  footer{font-size:10px;padding:14px 0 10px;}
+}
 </style>
 </head>
 <body>

@@ -117,6 +117,29 @@ textarea::placeholder{color:var(--text-muted);}
 .eval-chart-wrap canvas{cursor:pointer;}
 footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:28px;}
 @media(max-width:900px){.grid{grid-template-columns:1fr;}.badge{display:none;}#chessboard{width:320px !important;}}
+@media(max-width:768px){
+  .container{padding:0 12px;}
+  header{padding:14px 0 12px;margin-bottom:16px;}
+  .lt h1{font-size:17px;}
+  .lt p{display:none;}
+  .badge{display:none;}
+  .grid{display:flex;flex-direction:column;gap:12px;}
+  .board-area{width:100%;}
+  .mode-row{width:100% !important;}
+  #chessboard{width:calc(100vw - 56px) !important;}
+  .eval-bar-wrap{height:calc(100vw - 56px) !important;}
+  .nav-row{flex-wrap:wrap;justify-content:center;gap:4px;}
+  .nb{padding:6px 10px;font-size:12px;}
+  .mc-counter{font-size:10px;padding:6px 8px;}
+  .moves-grid{max-height:180px;}
+  .ac-text{font-size:12px;line-height:1.7;padding:10px;}
+  .ac-scores{gap:4px;padding:8px 10px;}
+  .sc-val{font-size:13px;}
+  .tm-move{font-size:14px;}
+  .eval-chart-wrap{padding:8px 10px 12px;}
+  .pb{padding:12px;}
+  footer{font-size:10px;padding:16px 0 12px;}
+}
 </style>
 </head>
 <body>
