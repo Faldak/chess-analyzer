@@ -376,5 +376,174 @@ def analyze_position():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+        @app.route("/trainer")
+def trainer():
+    return render_template("trainer.html")
+
+@app.route("/trainer_move", methods=["POST"])
+def trainer_move():
+    """Stockfish делает ход за тренера + ИИ объясняет оба хода."""
+    data = request.get_json()
+    fen = data.get("fen", "")
+    player_move = data.get("player_move", "")   # ход игрока (SAN) или "" если первый ход
+    level = data.get("level", "medium")          # novice / medium / master
+    move_number = data.get("move_number", 1)
+    game_pgn = data.get("pgn", "")              # вся партия до этого момента
+
+    # Skill levels для Stockfish
+    skill_map = {"novice": 3, "medium": 10, "master": 18}
+    depth_map  = {"novice": 5, "medium": 10, "master": 15}
+    skill = skill_map.get(level, 10)
+    depth = depth_map.get(level, 10)
+
+    try:
+        board = chess.Board(fen)
+        sf_path = get_sf()
+        if not sf_path:
+            return jsonify({"error": "Stockfish не найден"}), 500
+
+        # Оценка позиции до хода тренера
+        with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
+            engine.configure({"Skill Level": skill})
+
+            # Оценка текущей позиции
+            info_before = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=1)
+            score_before = info_before[0]["score"].white().score(mate_score=10000) if isinstance(info_before, list) else info_before["score"].white().score(mate_score=10000)
+
+            # Ход тренера
+            result = engine.play(board, chess.engine.Limit(depth=depth))
+            trainer_mv = result.move
+            trainer_san = board.san(trainer_mv)
+
+            board.push(trainer_mv)
+
+            # Оценка после хода тренера
+            info_after = engine.analyse(board, chess.engine.Limit(depth=8), multipv=1)
+            score_after = info_after[0]["score"].white().score(mate_score=10000) if isinstance(info_after, list) else info_after["score"].white().score(mate_score=10000)
+
+            # Проверка на мат/конец игры
+            game_over = board.is_game_over()
+            game_over_reason = ""
+            if board.is_checkmate():
+                game_over_reason = "checkmate"
+            elif board.is_stalemate():
+                game_over_reason = "stalemate"
+            elif board.is_insufficient_material():
+                game_over_reason = "insufficient"
+
+        # Генерируем комментарий тренера через ИИ
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+        level_names = {"novice": "начинающий", "medium": "средний", "master": "продвинутый"}
+        level_name = level_names.get(level, "средний")
+
+        player_block = ""
+        if player_move:
+            player_block = f"\nИгрок только что сделал ход: {player_move}"
+
+        prompt = f"""Ты шахматный тренер, играешь против ученика ({level_name} уровень).
+Ход номер {move_number} в партии.
+FEN до твоего хода: {fen}
+{player_block}
+Твой ход: {trainer_san}
+Оценка позиции до: {score_before/100 if score_before else 0:.2f}
+Оценка после твоего хода: {score_after/100 if score_after else 0:.2f}
+
+Напиши короткий живой комментарий (2-4 предложения) КАК НАСТОЯЩИЙ ТРЕНЕР во время игры.
+Говори от первого лица ("Я делаю...", "Интересный ход...", "Хм...").
+{'Прокомментируй ход ученика и объясни свой ответный ход.' if player_move else 'Объясни свой первый ход и намерения.'}
+Будь живым, используй шахматные термины, иногда хвали или мягко критикуй.
+Не используй markdown, только обычный текст."""
+
+        chat = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            max_tokens=200,
+        )
+        comment = chat.choices[0].message.content.strip()
+
+        return jsonify({
+            "trainer_move": trainer_san,
+            "trainer_move_uci": trainer_mv.uci(),
+            "fen_after": board.fen(),
+            "score_before": score_before,
+            "score_after": score_after,
+            "comment": comment,
+            "game_over": game_over,
+            "game_over_reason": game_over_reason,
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/trainer_draw", methods=["POST"])
+def trainer_draw():
+    """Проверяет — примет ли тренер ничью (если после 20 ходов позиция ничейная)."""
+    data = request.get_json()
+    fen = data.get("fen", "")
+    move_number = data.get("move_number", 0)
+
+    try:
+        if move_number < 20:
+            return jsonify({"accept": False, "reason": "too_early",
+                            "message": "Партия только началась, рано говорить о ничьей!"})
+
+        board = chess.Board(fen)
+        sf_path = get_sf()
+        if not sf_path:
+            return jsonify({"accept": False})
+
+        with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
+            info = engine.analyse(board, chess.engine.Limit(time=0.3))
+            score = info["score"].white().score(mate_score=10000) if not isinstance(info, list) else info[0]["score"].white().score(mate_score=10000)
+
+        # Принимаем ничью если оценка в диапазоне ±80 сантипешек
+        accept = score is not None and abs(score) <= 80
+
+        if accept:
+            message = "Позиция действительно равна... Хорошо, принимаю ничью. Хорошая партия!"
+        else:
+            advantage = "у меня" if score > 0 else "у тебя"
+            message = f"Нет, я не принимаю ничью — преимущество сейчас {advantage}. Играем дальше!"
+
+        return jsonify({"accept": accept, "score": score, "message": message})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/trainer_pgn", methods=["POST"])
+def trainer_pgn():
+    """Генерирует PGN сыгранной партии с тренером."""
+    data = request.get_json()
+    moves = data.get("moves", [])      # список SAN ходов
+    player_color = data.get("player_color", "white")
+    level = data.get("level", "medium")
+    result = data.get("result", "*")
+
+    try:
+        game = chess.pgn.Game()
+        game.headers["Event"] = "Игра с тренером Chess Analyzer"
+        game.headers["White"] = "Игрок" if player_color == "white" else f"Тренер ({level})"
+        game.headers["Black"] = f"Тренер ({level})" if player_color == "white" else "Игрок"
+        game.headers["Result"] = result
+
+        node = game
+        board = chess.Board()
+        for san in moves:
+            try:
+                mv = board.parse_san(san)
+                node = node.add_variation(mv)
+                board.push(mv)
+            except Exception:
+                break
+
+        pgn_str = str(game)
+        return jsonify({"pgn": pgn_str})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
