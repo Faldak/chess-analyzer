@@ -140,6 +140,27 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   .pb{padding:12px;}
   footer{font-size:10px;padding:16px 0 12px;}
 }
+.ac-more-btn{
+  display:block;
+  margin:8px 14px 12px;
+  padding:6px 14px;
+  background:transparent;
+  border:1px solid var(--accent);
+  color:var(--accent);
+  border-radius:7px;
+  font-size:11px;
+  font-family:'JetBrains Mono',monospace;
+  cursor:pointer;
+  transition:all .15s;
+}
+.ac-more-btn:hover{background:rgba(201,168,76,.1);}
+.ac-short{padding:0;font-size:13px;line-height:1.75;color:var(--text);}
+.ac-full p{margin-bottom:6px;}
+.ac-full strong{color:var(--accent2);display:block;margin-top:10px;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+@media(max-width:768px){
+  .ac-short{font-size:12px;}
+  .ac-more-btn{font-size:10px;padding:5px 10px;}
+}
 </style>
 </head>
 <body>
@@ -570,12 +591,41 @@ async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
       document.getElementById('ac-scores').style.display='none';
       document.getElementById('ac-hdr').style.display='none';
     }
-    const txt=document.getElementById('ac-text');
-    const html=data.analysis.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').split('\n\n').map(p=>p.trim()?`<p>${p.replace(/\n/g,'<br>')}</p>`:'').join('');
-    txt.innerHTML=html||data.analysis;
+
+    // Разбиваем на краткое и подробное
+    const txt = document.getElementById('ac-text');
+    const html = data.analysis
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .split('\n\n').map(p=>p.trim()?`<p>${p.replace(/\n/g,'<br>')}</p>`:'').join('');
+
+    // Берём первый абзац как краткое резюме
+    const paragraphs = data.analysis.split('\n\n').filter(p => p.trim());
+    const shortText = paragraphs[0] || data.analysis;
+    const shortHtml = shortText.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    const fullHtml = html;
+
+    txt.innerHTML = `
+      <div class="ac-short">${shortHtml}</div>
+      <div class="ac-full" style="display:none;">${fullHtml}</div>
+      <button class="ac-more-btn" onclick="toggleAnalysis(this)">Подробнее ▾</button>
+    `;
     txt.style.display='block';
     txt.classList.remove('fade-in'); void txt.offsetWidth; txt.classList.add('fade-in');
   } catch(e){hideACLoading();}
+}
+
+function toggleAnalysis(btn) {
+  const full = btn.previousElementSibling;
+  const short = full.previousElementSibling;
+  if(full.style.display === 'none') {
+    full.style.display = 'block';
+    short.style.display = 'none';
+    btn.textContent = 'Свернуть ▴';
+  } else {
+    full.style.display = 'none';
+    short.style.display = 'block';
+    btn.textContent = 'Подробнее ▾';
+  }
 }
 
 function showScores(sb,sa,diff,ann){
