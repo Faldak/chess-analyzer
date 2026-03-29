@@ -343,11 +343,45 @@ def analyze_move():
 **🏆 Вывод:**
 Почему выиграл победитель — тактика, стратегия, ошибки соперника? объясни 1 предложением."""
 
+        # Краткое резюме
+        def get_quality_label(diff):
+            if diff is None: return "Позиция"
+            if diff <= -300: return "?? Грубая ошибка"
+            if diff <= -100: return "? Ошибка"
+            if diff <= -50:  return "?! Неточность"
+            if diff >= 200:  return "!! Блестящий ход"
+            if diff >= 50:   return "! Хороший ход"
+            if diff >= 20:   return "!? Интересный ход"
+            return "Нейтральный ход"
+
+        # Вычисляем diff для резюме
+        summary_diff = None
+        summary_sb = None
+        summary_sa = None
+        if 'sb' in dir() and sb is not None and sa is not None:
+            is_w = True
+            if custom_move and custom_fen:
+                board_tmp = chess.Board(custom_fen)
+                is_w = board_tmp.turn == chess.WHITE
+            elif move_index is not None:
+                is_w = move_index % 2 == 0
+            summary_diff = (sa - sb) if is_w else (sb - sa)
+            summary_sb = sb
+            summary_sa = sa
+
+        quality = get_quality_label(summary_diff)
+        sb_s = f"{summary_sb/100:+.2f}" if summary_sb is not None else "?"
+        sa_s = f"{summary_sa/100:+.2f}" if summary_sa is not None else "?"
+        summary = f"{sb_s} → {sa_s}  ·  {quality}"
+
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
         )
-        return jsonify({"analysis": chat.choices[0].message.content})
+        return jsonify({
+            "analysis": chat.choices[0].message.content,
+            "summary": summary
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
