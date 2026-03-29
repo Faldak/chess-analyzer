@@ -492,16 +492,23 @@ function renderBoard() {
       if (sq === selectedSq) div.classList.add('sel');
       if (legalTargets.includes(sq)) div.classList.add('legal');
 
-      // Labels
-      const isBottomRank = flipped ? r === 8 : r === 1;
-      const isLeftFile   = flipped ? f === 'h' : f === 'a';
-      if (isBottomRank) {
-        const fl = document.createElement('span'); fl.className='sq-lbl file'; fl.textContent=f;
-        fl.style.color = isLight ? '#b58863' : '#f0d9b5'; div.appendChild(fl);
+      // Метки: ранги слева (первый файл в ряду), файлы снизу (последний ранг)
+      const isFirstFile = f === files[0];
+      const isLastRank  = r === ranks[ranks.length - 1];
+
+      if (isFirstFile) {
+        const rl = document.createElement('span');
+        rl.className = 'sq-lbl rank';
+        rl.textContent = r;
+        rl.style.color = isLight ? '#b58863' : '#f0d9b5';
+        div.appendChild(rl);
       }
-      if (isLeftFile) {
-        const rl = document.createElement('span'); rl.className='sq-lbl rank'; rl.textContent=r;
-        rl.style.color = isLight ? '#b58863' : '#f0d9b5'; div.appendChild(rl);
+      if (isLastRank) {
+        const fl = document.createElement('span');
+        fl.className = 'sq-lbl file';
+        fl.textContent = f;
+        fl.style.color = isLight ? '#b58863' : '#f0d9b5';
+        div.appendChild(fl);
       }
 
       div.onclick = () => handleClick(sq);
