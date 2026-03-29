@@ -125,7 +125,6 @@ def annotate():
 
 @app.route("/analyze_move", methods=["POST"])
 def analyze_move():
-    """Get AI explanation for a specific move or position."""
     data = request.get_json()
     pgn_text = data.get("pgn", "").strip()
     move_index = data.get("move_index", None)
@@ -134,39 +133,116 @@ def analyze_move():
 
     try:
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        sf_path = get_sf()
 
-        if custom_fen and custom_move:
-            # Analyzing a user's custom move in exploration mode
+        def get_sf_data(board, move_obj=None, engine=None):
+            """Получает данные Stockfish для позиции и хода."""
+            info_before = engine.analyse(board, chess.engine.Limit(time=0.5), multipv=3)
+            score_before = info_before[0]["score"].white().score(mate_score=10000)
+
+            top_moves = []
+            for entry in info_before:
+                if "pv" in entry and entry["pv"]:
+                    top_moves.append({
+                        "san": board.san(entry["pv"][0]),
+                        "score": entry["score"].white().score(mate_score=10000)
+                    })
+
+            score_after = None
+            if move_obj:
+                board_after = board.copy()
+                board_after.push(move_obj)
+                info_after = engine.analyse(board_after, chess.engine.Limit(time=0.5))
+                score_after = (info_after if not isinstance(info_after, list) else info_after[0])["score"].white().score(mate_score=10000)
+
+            return score_before, score_after, top_moves
+
+        # ── Режим исследования ──
+        if custom_fen:
             board = chess.Board(custom_fen)
-            sf_path = get_sf()
-            stockfish_info = ""
+            is_white = board.turn == chess.WHITE
+            color_name = "Белые" if is_white else "Чёрные"
+
+            sb, sa, top_moves = None, None, []
             if sf_path:
                 with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
-                    info_before = engine.analyse(board, chess.engine.Limit(time=0.3), multipv=2)
-                    score_before = info_before[0]["score"].white().score(mate_score=10000) if isinstance(info_before, list) else info_before["score"].white().score(mate_score=10000)
-                    top1 = board.san(info_before[0]["pv"][0]) if isinstance(info_before, list) and info_before[0].get("pv") else "?"
-                    top2 = board.san(info_before[1]["pv"][0]) if isinstance(info_before, list) and len(info_before) > 1 and info_before[1].get("pv") else "?"
+                    move_obj = None
+                    if custom_move:
+                        try:
+                            move_obj = board.parse_san(custom_move)
+                        except Exception:
+                            pass
+                    sb, sa, top_moves = get_sf_data(board, move_obj, engine)
 
-                    try:
-                        mv = board.parse_san(custom_move)
-                        board_after = board.copy()
-                        board_after.push(mv)
-                        info_after = engine.analyse(board_after, chess.engine.Limit(time=0.3))
-                        score_after = info_after["score"].white().score(mate_score=10000) if not isinstance(info_after, list) else info_after[0]["score"].white().score(mate_score=10000)
-                        diff = score_after - score_before
-                        stockfish_info = f"Оценка до: {score_before}, после: {score_after}, изменение: {diff:+d}\nЛучший ход: {top1}\nАльтернатива: {top2}"
-                    except:
-                        stockfish_info = f"Лучший ход: {top1}, альтернатива: {top2}"
+            top1 = top_moves[0]["san"] if len(top_moves) > 0 else "?"
+            top2 = top_moves[1]["san"] if len(top_moves) > 1 else "?"
+            top3 = top_moves[2]["san"] if len(top_moves) > 2 else "?"
 
-            is_white = board.turn == chess.WHITE
-            prompt = f"""Ты шахматный тренер. Игрок сделал ход {custom_move} в позиции FEN: {custom_fen}
-{stockfish_info}
+            sb_fmt = f"{sb/100:+.2f}" if sb is not None else "?"
+            sa_fmt = f"{sa/100:+.2f}" if sa is not None else "?"
+            diff = None
+            if sb is not None and sa is not None:
+                diff = (sa - sb) if is_white else (sb - sa)
+            diff_fmt = f"{diff:+d} сантипешек" if diff is not None else "?"
 
-Объясни коротко (2-3 предложения):
-1. Что за ход и идея
-2. Хороший или плохой — на основе оценки Stockfish
-3. Если плохой — что лучше было сыграть"""
+            if custom_move:
+                prompt = f"""Ты опытный шахматный тренер. Игрок сделал ход и хочет понять его качество.
 
+Позиция (FEN): {custom_fen}
+Ход: {custom_move} ({color_name})
+
+=== Данные Stockfish ===
+Оценка ДО хода: {sb_fmt}
+Оценка ПОСЛЕ хода: {sa_fmt}
+Изменение оценки: {diff_fmt}
+Лучший ход: {top1}
+Второй лучший: {top2}
+Третий лучший: {top3}
+
+Дай полный разбор по разделам:
+
+**🎯 Идея хода {custom_move}:**
+Объясни что делает этот ход — атака, защита, развитие фигуры, захват пространства, тактика?
+
+**📊 Качество хода:**
+На основе изменения оценки Stockfish определи категорию (отличный ход / хороший / неточность / ошибка / грубая ошибка) и объясни почему.
+
+**♟ Тактика и план:**
+Какие угрозы создаёт или снимает этот ход? Какой план он открывает или закрывает?
+
+**⚡ Лучшая альтернатива:**
+Объясни почему {top1} был бы {'лучше' if custom_move != top1 else 'тоже хорош'} — какую конкретную идею он реализует?
+
+**💡 Урок:**
+Один практический совет — что нужно помнить в похожих позициях?"""
+
+            else:
+                prompt = f"""Ты опытный шахматный тренер. Проанализируй позицию для игрока.
+
+Позиция (FEN): {custom_fen}
+Очередь хода: {color_name}
+
+=== Данные Stockfish ===
+Оценка позиции: {sb_fmt}
+Лучший ход: {top1}
+Второй лучший: {top2}
+Третий лучший: {top3}
+
+Дай полный разбор:
+
+**📍 Оценка позиции:**
+Кто стоит лучше, почему — материал, король, пешечная структура, активность фигур?
+
+**🎯 Лучший план для {color_name}:**
+Объясни идею хода {top1} — что он даёт, какую угрозу создаёт или проблему решает?
+
+**♟ Альтернативный план:**
+Коротко объясни идею {top2}.
+
+**⚠️ Чего избегать:**
+Какие ходы были бы ошибкой и почему?"""
+
+        # ── Режим просмотра партии ──
         else:
             game = chess.pgn.read_game(io.StringIO(pgn_text))
             moves_san = []
@@ -184,48 +260,88 @@ def analyze_move():
                 target = moves_san[move_index]
                 color = "Белые" if move_index % 2 == 0 else "Чёрные"
                 move_num = move_index // 2 + 1
-                context = moves_san[max(0, move_index-3):move_index+2]
+                context_before = " ".join(moves_san[max(0, move_index-4):move_index])
+                context_after = " ".join(moves_san[move_index+1:move_index+3])
 
+                # Восстанавливаем позицию ДО хода
                 board2 = game.board()
                 for i, mv in enumerate(move_objects):
                     if i == move_index:
                         break
                     board2.push(mv)
-                fen = board2.fen()
+                fen_before = board2.fen()
 
-                sf_path = get_sf()
-                sf_info = ""
+                sb, sa, top_moves = None, None, []
                 if sf_path:
                     with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
-                        info_b = engine.analyse(board2, chess.engine.Limit(time=0.3), multipv=2)
-                        sb = info_b[0]["score"].white().score(mate_score=10000) if isinstance(info_b, list) else info_b["score"].white().score(mate_score=10000)
-                        top1 = board2.san(info_b[0]["pv"][0]) if isinstance(info_b, list) and info_b[0].get("pv") else "?"
-                        top2 = board2.san(info_b[1]["pv"][0]) if isinstance(info_b, list) and len(info_b) > 1 and info_b[1].get("pv") else "?"
-                        try:
-                            mv_obj = move_objects[move_index]
-                            b2 = board2.copy(); b2.push(mv_obj)
-                            info_a = engine.analyse(b2, chess.engine.Limit(time=0.3))
-                            sa = info_a["score"].white().score(mate_score=10000) if not isinstance(info_a, list) else info_a[0]["score"].white().score(mate_score=10000)
-                            diff = sa - sb if color == "Белые" else sb - sa
-                            sf_info = f"Оценка Stockfish: до={sb}, после={sa}, изменение={diff:+d}\nЛучший ход: {top1}, альтернатива: {top2}"
-                        except:
-                            sf_info = f"Лучший ход: {top1}, альтернатива: {top2}"
+                        sb, sa, top_moves = get_sf_data(board2, move_objects[move_index], engine)
 
-                prompt = f"""Ты шахматный тренер. Проанализируй ход {move_num}. {target} ({color}) из партии {white} vs {black}.
-Позиция FEN: {fen}
-Контекст: {" ".join(context)}
-{sf_info}
+                top1 = top_moves[0]["san"] if len(top_moves) > 0 else "?"
+                top2 = top_moves[1]["san"] if len(top_moves) > 1 else "?"
+                top3 = top_moves[2]["san"] if len(top_moves) > 2 else "?"
 
-Объясни (3-4 предложения):
-1. Идея и смысл хода
-2. Качество хода по Stockfish
-3. Что лучше было сыграть если ход плохой"""
+                sb_fmt = f"{sb/100:+.2f}" if sb is not None else "?"
+                sa_fmt = f"{sa/100:+.2f}" if sa is not None else "?"
+                diff = None
+                if sb is not None and sa is not None:
+                    diff = (sa - sb) if color == "Белые" else (sb - sa)
+                diff_fmt = f"{diff:+d} сантипешек" if diff is not None else "?"
+
+                prompt = f"""Ты опытный шахматный тренер. Разбери конкретный ход из партии.
+
+Партия: {white} vs {black} (результат: {result})
+Ход {move_num}: {target} ({color})
+Позиция до хода (FEN): {fen_before}
+Ходы до: {context_before}
+Ходы после: {context_after}
+
+=== Данные Stockfish ===
+Оценка ДО хода: {sb_fmt}
+Оценка ПОСЛЕ хода: {sa_fmt}
+Изменение оценки: {diff_fmt}
+Лучший ход Stockfish: {top1}
+Второй лучший: {top2}
+Третий лучший: {top3}
+
+Дай полный разбор по разделам:
+
+**🎯 Идея хода {target}:**
+Что делает этот ход — атака, защита, тактика, развитие, захват пространства?
+
+**📊 Качество хода:**
+На основе изменения оценки определи категорию и объясни. Если это ошибка — почему игрок мог её допустить?
+
+**♟ Тактика и план:**
+Какие угрозы создаёт или нейтрализует этот ход? Как он влияет на дальнейшую игру (на это указывают ходы после)?
+
+**⚡ Лучшая альтернатива:**
+Объясни идею хода {top1} — что конкретно он давал лучшего?
+
+**💡 Урок из этого момента:**
+Один практический вывод для игрока — что нужно помнить в похожих позициях?"""
+
             else:
+                # Общий анализ партии
                 moves_str = " ".join([f"{i//2+1}.{m}" if i%2==0 else m for i,m in enumerate(moves_san)])
-                prompt = f"""Ты шахматный тренер. Общий анализ партии {white} vs {black} ({result}):
-{moves_str}
+                prompt = f"""Ты опытный шахматный тренер. Дай полный анализ партии.
 
-Анализ (4-5 предложений): характер партии, ключевые моменты, ошибки, вывод."""
+Партия: {white} vs {black}, результат: {result}
+Ходы: {moves_str}
+
+**🏁 Характер партии:**
+Открытая/закрытая, тактическая/позиционная, дебют?
+
+**📍 Ключевой момент:**
+Самый важный ход или позиция — где решилась партия?
+
+**❌ Ошибки белых:**
+Главные ошибки и почему они проигрышны.
+
+**❌ Ошибки чёрных:**
+Главные ошибки и почему они проигрышны.
+
+**🏆 Вывод:**
+Почему выиграл победитель — тактика, стратегия, ошибки соперника?"""
 
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],

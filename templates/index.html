@@ -6,6 +6,7 @@
 <title>Chess Analyzer</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;--accent:#c9a84c;--accent2:#e8c97a;--text:#f0ede8;--text-muted:#7a7a8a;--ws:#f0d9b5;--bs:#b58863;--hl:rgba(201,168,76,.5);--bm:rgba(90,184,122,.5);}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -52,12 +53,12 @@ textarea::placeholder{color:var(--text-muted);}
 .mc.active{background:rgba(201,168,76,.2);color:var(--accent);}
 .mc.empty{cursor:default;color:transparent;} .mc.empty:hover{background:var(--surface);}
 .ann{font-size:11px;font-weight:700;flex-shrink:0;}
-.ann-bb{color:#e05a5a;} /* ?? */
-.ann-b{color:#e07a5a;}  /* ? */
-.ann-bi{color:#e0aa5a;} /* ?! */
-.ann-g{color:#5ab87a;}  /* ! */
-.ann-gg{color:#3da862;} /* !! */
-.ann-gi{color:#7acc95;} /* !? */
+.ann-bb{color:#e05a5a;}
+.ann-b{color:#e07a5a;}
+.ann-bi{color:#e0aa5a;}
+.ann-g{color:#5ab87a;}
+.ann-gg{color:#3da862;}
+.ann-gi{color:#7acc95;}
 
 /* Board area */
 .board-area{display:flex;flex-direction:column;align-items:center;gap:12px;}
@@ -77,9 +78,6 @@ textarea::placeholder{color:var(--text-muted);}
 .sq.legal::after{content:'';position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(0,0,0,.18);pointer-events:none;}
 .sq.legal.has-piece::after{content:'';position:absolute;inset:3px;border-radius:50%;background:transparent;border:3px solid rgba(0,0,0,.25);width:auto;height:auto;}
 .sq svg{width:84%;height:84%;pointer-events:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35));}
-.sq.dragging-over{background:rgba(201,168,76,.4)!important;}
-.piece-drop{animation:drop .15s ease-out;}
-@keyframes drop{from{transform:scale(.85);opacity:.7;}to{transform:scale(1);opacity:1;}}
 .sq-lbl{position:absolute;font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:600;opacity:.55;pointer-events:none;}
 .sq-lbl.rank{bottom:2px;right:2px;} .sq-lbl.file{top:2px;left:2px;}
 
@@ -123,7 +121,13 @@ textarea::placeholder{color:var(--text-muted);}
 .sc-lbl{font-size:9px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:.5px;margin-bottom:3px;}
 .sc-val{font-size:16px;font-weight:600;font-family:'JetBrains Mono',monospace;}
 .sc-val.pos{color:#5ab87a;} .sc-val.neg{color:#e05a5a;}
-.ac-text{padding:14px;font-size:13px;line-height:1.75;color:var(--text);}
+
+/* FIX: ac-text now renders markdown bold + paragraphs */
+.ac-text{padding:14px;font-size:13px;line-height:1.85;color:var(--text);}
+.ac-text strong{color:var(--accent2);display:block;margin-top:12px;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+.ac-text p{margin-bottom:6px;}
+.ac-text p:first-child strong{margin-top:0;}
+
 .ac-empty{display:flex;align-items:center;justify-content:center;min-height:100px;color:var(--text-muted);font-size:12px;}
 .ac-loading{display:flex;align-items:center;gap:8px;padding:14px;color:var(--text-muted);font-size:12px;}
 .spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;}
@@ -131,8 +135,13 @@ textarea::placeholder{color:var(--text-muted);}
 .err{display:none;background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.3);color:#e05a5a;padding:10px 14px;border-radius:8px;font-size:12px;margin-top:8px;}
 .fade-in{animation:fi .35s ease forwards;}
 @keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* Eval chart */
+.eval-chart-wrap{width:100%;padding:12px 16px 16px;}
+.eval-chart-wrap canvas{cursor:pointer;}
+
 footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:28px;}
-@media(max-width:900px){.grid{grid-template-columns:1fr;}.badge{display:none;}}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}.badge{display:none;}#chessboard{width:320px;height:320px;}.sq{width:40px;height:40px;}.eval-bar-wrap{height:320px;}}
 </style>
 </head>
 <body>
@@ -183,7 +192,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
       <div class="ac-text" id="ac-text" style="display:none;"></div>
     </div>
     <div class="pb" style="padding-top:0;">
-      <button class="btn btn-outline" id="analyze-btn" style="display:none;" onclick="analyzeCurrentMove()">Объяснить ход</button>
+      <button class="btn btn-outline" id="analyze-btn" style="display:none;" onclick="analyzeCurrentMove()">🔍 Объяснить ход / позицию</button>
     </div>
   </div>
 </div>
@@ -197,7 +206,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   <div class="explore-banner" id="explore-banner">Режим исследования — делай свои ходы для анализа</div>
   <div class="board-row">
     <div class="eval-bar-wrap">
-      <div class="eval-label" id="eval-top">+0</div>
+      <div class="eval-label" id="eval-top"></div>
       <div class="eval-bar"><div class="eval-fill" id="eval-fill" style="height:50%;"></div></div>
       <div class="eval-label" id="eval-bot">0</div>
     </div>
@@ -211,6 +220,14 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
     <div class="mc-counter" id="mc-counter">0 / 0</div>
     <button class="nb" id="nb-next" onclick="next()">›</button>
     <button class="nb" id="nb-last" onclick="goTo(allMoves.length)">⟫</button>
+  </div>
+
+  <!-- Eval Chart -->
+  <div class="panel" id="eval-chart-panel" style="display:none;width:100%;">
+    <div class="ph"><div class="dot"></div><h2>График оценки</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">кликни по точке → перейти к ходу</span></div>
+    <div class="eval-chart-wrap">
+      <canvas id="evalChart" height="90"></canvas>
+    </div>
   </div>
 </div>
 
@@ -231,7 +248,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 </div>
 
 <script>
-// ── Lichess-style SVG pieces (cburnett set) ──
+// ── SVG Pieces (cburnett / Lichess) ──
 const PIECES = {
 wK:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6" stroke-linejoin="miter"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#fff" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V17s1.5-7-5.5-7S7 17 7 17v6.5c-2.5 6 5 10 5 10V37z" fill="#fff"/><path d="M20 8h5"/><path d="M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0"/></g></svg>`,
 wQ:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#fff" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm16.5-4.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM41 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM16 8.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM33 8.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path d="M9 26c8.5-1.5 21-1.5 27 0l2.5-12.5L31 25l-.3-14.1-8.2 13.4-8.2-13.4-.3 14.1L6.5 13.5z" stroke-linecap="butt"/><path d="M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z"/><path d="M11.5 30c3.5-1 18.5-1 22 0M12 33.5c4-1.5 17-1.5 21 0" fill="none"/></g></svg>`,
@@ -250,27 +267,29 @@ bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9
 function getPieceSVG(piece) {
   if (!piece) return '';
   const col = piece.color === 'w' ? 'w' : 'b';
-  const t = piece.type.toUpperCase();
-  return PIECES[col + t] || '';
+  return PIECES[col + piece.type.toUpperCase()] || '';
 }
 
 // ── State ──
+// FIX: renamed chessGame to avoid conflict with Chess library
 const FILES = ['a','b','c','d','e','f','g','h'];
 const RANKS = [8,7,6,5,4,3,2,1];
-let chess = new Chess();
+let chessGame = new Chess();       // FIX: was `chess` — conflicted with Chess constructor
 let allMoves = [], annotations = [], scores = [], topMovesData = [];
 let curIdx = 0, selectedSq = null, legalTargets = [];
-let mode = 'review'; // 'review' | 'explore'
+let mode = 'review';
 let exploreChess = null;
 let gameLoaded = false;
+let evalChart = null;
+let pgnStore = '';                 // FIX: store pgn globally so analyzeCurrentMove always has it
 
 // ── Board rendering ──
 function renderBoard() {
   const el = document.getElementById('chessboard');
   el.innerHTML = '';
-  const game = mode === 'explore' ? exploreChess : chess;
+  const game = mode === 'explore' ? exploreChess : chessGame;
   const boardFen = game ? game.fen() : 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  const tempChess = new Chess(boardFen);
+  const tempGame = new Chess(boardFen);   // FIX: was `new Chess()` but var was also named chess
 
   for (let r of RANKS) {
     for (let f of FILES) {
@@ -280,15 +299,14 @@ function renderBoard() {
       div.className = 'sq ' + (isLight ? 'light' : 'dark');
       div.dataset.sq = sq;
 
-      const piece = tempChess.get(sq);
+      const piece = tempGame.get(sq);
       if (piece) {
         div.innerHTML = getPieceSVG(piece);
         if (legalTargets.includes(sq)) div.classList.add('has-piece');
       }
 
-      // Highlights
       if (mode === 'review' && curIdx > 0) {
-        const hist = chess.history({verbose: true});
+        const hist = chessGame.history({verbose: true});
         if (hist[curIdx-1]) {
           const mv = hist[curIdx-1];
           if (sq === mv.from || sq === mv.to) div.classList.add('hl');
@@ -297,7 +315,6 @@ function renderBoard() {
       if (sq === selectedSq) div.classList.add('sel');
       if (legalTargets.includes(sq)) div.classList.add('legal');
 
-      // Labels
       if (r === 1) { const fl = document.createElement('span'); fl.className='sq-lbl file'; fl.textContent=f; fl.style.color=isLight?'#b58863':'#f0d9b5'; div.appendChild(fl); }
       if (f === 'h') { const rl = document.createElement('span'); rl.className='sq-lbl rank'; rl.textContent=r; rl.style.color=isLight?'#b58863':'#f0d9b5'; div.appendChild(rl); }
 
@@ -308,12 +325,10 @@ function renderBoard() {
 }
 
 function handleSquareClick(sq) {
-  if (mode === 'review') return; // no interaction in review mode
-
+  if (mode === 'review') return;
   const game = exploreChess;
   if (!game) return;
 
-  // If a square is selected and sq is a legal target → make move
   if (selectedSq && legalTargets.includes(sq)) {
     const move = game.move({ from: selectedSq, to: sq, promotion: 'q' });
     if (move) {
@@ -321,13 +336,13 @@ function handleSquareClick(sq) {
       renderBoard();
       updateEvalBar(null);
       fetchPositionAnalysis(game.fen());
-      // Auto-request AI explanation
-      fetchMoveExplanation(null, null, game.fen(), move.san);
+      // FIX: передаём FEN до хода для корректного анализа
+      const fenAfter = game.fen();
+      fetchMoveExplanation(null, null, fenAfter, move.san);
       return;
     }
   }
 
-  // Select piece
   const piece = game.get(sq);
   if (piece && piece.color === game.turn()) {
     selectedSq = sq;
@@ -361,43 +376,31 @@ async function loadGame() {
     scores = data.scores || [];
     topMovesData = data.top_moves || [];
     gameLoaded = true;
+    pgnStore = pgn;   // FIX: save pgn globally
 
-    // Load full game into chess.js
-    chess = new Chess();
-    chess.load_pgn(pgn.trim());
-
-    // Reset to start
-    curIdx = 0;
-    chess = new Chess(); // restart from beginning for step-by-step
-    // Re-apply moves up to curIdx
-    const tempC = new Chess();
-    if (!tempC.load_pgn(pgn.trim())) {
-      // Try as moves only
-      const c2 = new Chess();
-      allMoves.forEach(m => c2.move(m));
-      chess = c2;
-    } else {
-      chess = tempC;
+    // FIX: load PGN properly with fallback
+    chessGame = new Chess();
+    const loaded = chessGame.load_pgn(pgn.trim());
+    if (!loaded) {
+      chessGame = new Chess();
+      allMoves.forEach(m => chessGame.move(m));
     }
-    // Go to start
+
     goTo(0);
 
-    // Players
     document.getElementById('wname').textContent = data.white;
     document.getElementById('bname').textContent = data.black;
     document.getElementById('rbadge').textContent = data.result;
     document.getElementById('players-bar').style.display = 'flex';
 
-    // Build moves grid
     buildMovesGrid();
 
-    // Show UI
     document.getElementById('moves-panel').style.display = 'block';
     document.getElementById('nav-row').style.display = 'flex';
     document.getElementById('mode-row').style.display = 'flex';
     document.getElementById('analyze-btn').style.display = 'block';
 
-    // Show general analysis
+    buildEvalChart();
     fetchMoveExplanation(pgn, null, null, null);
 
   } catch(e) {
@@ -421,7 +424,6 @@ function buildMovesGrid() {
       cell.className = 'mc';
       cell.dataset.idx = idx;
       cell.textContent = allMoves[idx];
-      // Annotation
       const ann = annotations[idx] || '';
       if (ann) {
         const sp = document.createElement('span');
@@ -437,10 +439,10 @@ function buildMovesGrid() {
 
 function getAnnClass(a) {
   if (a==='??') return 'ann-bb';
-  if (a==='?') return 'ann-b';
+  if (a==='?')  return 'ann-b';
   if (a==='?!') return 'ann-bi';
   if (a==='!!') return 'ann-gg';
-  if (a==='!') return 'ann-g';
+  if (a==='!')  return 'ann-g';
   if (a==='!?') return 'ann-gi';
   return '';
 }
@@ -451,13 +453,12 @@ function goTo(idx) {
   idx = Math.max(0, Math.min(idx, allMoves.length));
   curIdx = idx;
 
-  // Rebuild chess to position
-  chess = new Chess();
-  for (let i = 0; i < idx; i++) chess.move(allMoves[i]);
+  // FIX: rebuild position step by step (correct approach)
+  chessGame = new Chess();
+  for (let i = 0; i < idx; i++) chessGame.move(allMoves[i]);
 
-  // If in explore mode, reset explore from this position
   if (mode === 'explore') {
-    exploreChess = new Chess(chess.fen());
+    exploreChess = new Chess(chessGame.fen());
   }
 
   selectedSq = null; legalTargets = [];
@@ -466,6 +467,7 @@ function goTo(idx) {
   updateNav();
   updateEvalForIdx(idx);
   updateTopMoves(idx);
+  updateChartMarker(idx);
 }
 
 function prev() { goTo(curIdx - 1); }
@@ -482,46 +484,47 @@ function updateMoveHL() {
 
 function updateNav() {
   document.getElementById('nb-first').disabled = curIdx === 0;
-  document.getElementById('nb-prev').disabled = curIdx === 0;
-  document.getElementById('nb-next').disabled = curIdx === allMoves.length;
-  document.getElementById('nb-last').disabled = curIdx === allMoves.length;
+  document.getElementById('nb-prev').disabled  = curIdx === 0;
+  document.getElementById('nb-next').disabled  = curIdx === allMoves.length;
+  document.getElementById('nb-last').disabled  = curIdx === allMoves.length;
 }
 
 // ── Eval bar ──
-function updateEvalForIdx(idx) {
-  const score = scores[idx];
-  updateEvalBar(score);
-}
+function updateEvalForIdx(idx) { updateEvalBar(scores[idx]); }
 
 function updateEvalBar(score) {
   const fill = document.getElementById('eval-fill');
-  const top = document.getElementById('eval-top');
-  const bot = document.getElementById('eval-bot');
-  if (score === null || score === undefined) { fill.style.height='50%'; top.textContent=''; bot.textContent=''; return; }
+  const top  = document.getElementById('eval-top');
+  const bot  = document.getElementById('eval-bot');
+  if (score === null || score === undefined) {
+    fill.style.height='50%'; top.textContent=''; bot.textContent=''; return;
+  }
   const clamped = Math.max(-1000, Math.min(1000, score));
   const pct = 50 + (clamped / 1000) * 45;
   fill.style.height = pct + '%';
-  const display = score >= 0 ? '+' + (score/100).toFixed(1) : (score/100).toFixed(1);
-  if (score >= 0) { top.textContent=''; bot.textContent=display; top.style.color='var(--text-muted)'; }
-  else { top.textContent=display; bot.textContent=''; }
+  const display = (score >= 0 ? '+' : '') + (score/100).toFixed(1);
+  if (score >= 0) { top.textContent=''; bot.textContent=display; }
+  else            { top.textContent=display; bot.textContent=''; }
 }
 
 // ── Top moves ──
 function updateTopMoves(idx) {
   const tm = topMovesData[idx];
   const container = document.getElementById('top-moves');
-  if (!tm || tm.length === 0) { container.innerHTML='<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0;">Нет данных</div>'; return; }
+  if (!tm || tm.length === 0) {
+    container.innerHTML='<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0;">Нет данных</div>';
+    return;
+  }
   container.innerHTML = '';
-  const labels = ['1. Лучший ход', '2. Альтернатива'];
+  const labels = ['1. Лучший ход','2. Альтернатива'];
   tm.forEach((mv, i) => {
-    const sc = scores[idx] !== undefined && scores[idx] !== null ? scores[idx] : null;
+    const sc = scores[idx] != null ? scores[idx] : null;
     const item = document.createElement('div');
     item.className = 'tm-item';
     item.innerHTML = `<div class="tm-rank">${labels[i]||''}</div><div class="tm-move">${mv}</div>`;
     if (sc !== null) {
-      const disp = sc >= 0 ? '+' + (sc/100).toFixed(2) : (sc/100).toFixed(2);
-      const cls = sc >= 0 ? 'pos' : 'neg';
-      item.innerHTML += `<div class="tm-score ${cls}">${disp}</div>`;
+      const disp = (sc >= 0 ? '+' : '') + (sc/100).toFixed(2);
+      item.innerHTML += `<div class="tm-score ${sc>=0?'pos':'neg'}">${disp}</div>`;
     }
     item.onclick = () => highlightBestMove(mv);
     container.appendChild(item);
@@ -529,15 +532,11 @@ function updateTopMoves(idx) {
 }
 
 function highlightBestMove(san) {
-  // Flash the move on board
-  const game = mode === 'explore' ? exploreChess : chess;
+  const game = mode === 'explore' ? exploreChess : chessGame;
   if (!game) return;
   try {
     const mv = game.move(san);
-    if (mv) {
-      renderBoard();
-      setTimeout(() => { game.undo(); renderBoard(); }, 700);
-    }
+    if (mv) { renderBoard(); setTimeout(() => { game.undo(); renderBoard(); }, 700); }
   } catch(e) {}
 }
 
@@ -548,7 +547,7 @@ function setMode(m) {
   document.getElementById('mode-explore').className = 'mode-btn' + (m==='explore'?' active':'');
   document.getElementById('explore-banner').style.display = m==='explore'?'block':'none';
   if (m === 'explore') {
-    exploreChess = new Chess(chess.fen());
+    exploreChess = new Chess(chessGame.fen());
     fetchPositionAnalysis(exploreChess.fen());
   } else {
     exploreChess = null;
@@ -560,7 +559,10 @@ function setMode(m) {
 // ── AI Analysis ──
 async function fetchPositionAnalysis(fen) {
   try {
-    const res = await fetch('/analyze_position', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fen}) });
+    const res = await fetch('/analyze_position', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({fen})
+    });
     const data = await res.json();
     if (data.top_moves) {
       const container = document.getElementById('top-moves');
@@ -569,7 +571,7 @@ async function fetchPositionAnalysis(fen) {
       data.top_moves.forEach((tm, i) => {
         const item = document.createElement('div');
         item.className = 'tm-item';
-        const sc = tm.score !== null ? (tm.score >= 0 ? '+' : '') + (tm.score/100).toFixed(2) : '?';
+        const sc = tm.score != null ? (tm.score>=0?'+':'') + (tm.score/100).toFixed(2) : '?';
         const cls = (tm.score||0) >= 0 ? 'pos' : 'neg';
         item.innerHTML = `<div class="tm-rank">${labels[i]||''}</div><div class="tm-move">${tm.move}</div><div class="tm-score ${cls}">${sc}</div>`;
         container.appendChild(item);
@@ -579,33 +581,40 @@ async function fetchPositionAnalysis(fen) {
   } catch(e) {}
 }
 
+// FIX: analyzeCurrentMove now correctly passes FEN of current position in both modes
 async function analyzeCurrentMove() {
-  const pgn = document.getElementById('pgn-input').value.trim();
   if (mode === 'explore') {
-    fetchMoveExplanation(null, null, (exploreChess||chess).fen(), null);
+    const game = exploreChess || chessGame;
+    fetchMoveExplanation(null, null, game.fen(), null);
     return;
   }
-  fetchMoveExplanation(pgn, curIdx > 0 ? curIdx - 1 : null, null, null);
+  // Review mode — pass pgn + move index
+  // curIdx=0 means start position → send general analysis
+  fetchMoveExplanation(pgnStore, curIdx > 0 ? curIdx - 1 : null, null, null);
 }
 
 async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
   showACLoading();
   try {
     const body = {};
-    if (pgn) body.pgn = pgn;
+    if (pgn)                                           body.pgn = pgn;
     if (moveIndex !== null && moveIndex !== undefined) body.move_index = moveIndex;
-    if (fen) body.fen = fen;
-    if (moveSan) body.move = moveSan;
+    if (fen)                                           body.fen = fen;
+    if (moveSan)                                       body.move = moveSan;
 
-    const res = await fetch('/analyze_move', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const res = await fetch('/analyze_move', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
     const data = await res.json();
     if (data.error) { hideACLoading(); return; }
 
     hideACLoading();
     document.getElementById('ac-empty').style.display = 'none';
 
-    // Show scores if we have move index
-    if (moveIndex !== null && moveIndex !== undefined && scores[moveIndex] !== undefined && scores[moveIndex+1] !== undefined) {
+    // Show scores panel only when we have move data
+    if (moveIndex !== null && moveIndex !== undefined &&
+        scores[moveIndex] !== undefined && scores[moveIndex+1] !== undefined) {
       const sb = scores[moveIndex], sa = scores[moveIndex+1];
       const isWhite = moveIndex % 2 === 0;
       const diff = isWhite ? sa - sb : sb - sa;
@@ -615,9 +624,15 @@ async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
       document.getElementById('ac-hdr').style.display = 'none';
     }
 
+    // FIX: render markdown **bold** as styled HTML
     const txt = document.getElementById('ac-text');
-    txt.textContent = data.analysis;
+    const html = data.analysis
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .split('\n\n').map(p => p.trim() ? `<p>${p.replace(/\n/g,'<br>')}</p>` : '').join('');
+    txt.innerHTML = html || data.analysis;
     txt.style.display = 'block';
+    txt.classList.remove('fade-in');
+    void txt.offsetWidth; // reflow to retrigger animation
     txt.classList.add('fade-in');
 
   } catch(e) { hideACLoading(); }
@@ -626,17 +641,15 @@ async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
 function showScores(sb, sa, diff, ann) {
   const fmt = v => (v >= 0 ? '+' : '') + (v/100).toFixed(2);
   document.getElementById('sc-b').textContent = fmt(sb);
-  document.getElementById('sc-b').className = 'sc-val ' + (sb >= 0 ? 'pos' : 'neg');
+  document.getElementById('sc-b').className = 'sc-val ' + (sb >= 0 ? 'pos':'neg');
   document.getElementById('sc-a').textContent = fmt(sa);
-  document.getElementById('sc-a').className = 'sc-val ' + (sa >= 0 ? 'pos' : 'neg');
+  document.getElementById('sc-a').className = 'sc-val ' + (sa >= 0 ? 'pos':'neg');
   document.getElementById('sc-d').textContent = fmt(diff);
-  document.getElementById('sc-d').className = 'sc-val ' + (diff >= 0 ? 'pos' : 'neg');
+  document.getElementById('sc-d').className = 'sc-val ' + (diff >= 0 ? 'pos':'neg');
   document.getElementById('ac-scores').style.display = 'flex';
 
   const hdr = document.getElementById('ac-hdr');
   hdr.style.display = 'flex';
-
-  // Remove old badge
   const old = hdr.querySelector('.qbadge'); if (old) old.remove();
   if (ann) {
     const badge = document.createElement('div');
@@ -648,9 +661,9 @@ function showScores(sb, sa, diff, ann) {
 
 function getQBadgeClass(a) {
   if (a==='??') return 'qb-bb';
-  if (a==='?') return 'qb-b';
+  if (a==='?')  return 'qb-b';
   if (a==='?!') return 'qb-bi';
-  if (a==='!') return 'qb-g';
+  if (a==='!')  return 'qb-g';
   if (a==='!!') return 'qb-gg';
   if (a==='!?') return 'qb-n';
   return 'qb-n';
@@ -662,19 +675,126 @@ function showACLoading() {
   document.getElementById('ac-text').style.display = 'none';
   document.getElementById('ac-hdr').style.display = 'none';
   let ld = document.getElementById('ac-loading');
-  if (!ld) { ld=document.createElement('div'); ld.id='ac-loading'; ld.className='ac-loading'; ld.innerHTML='<div class="spin"></div><span>Анализируем...</span>'; document.getElementById('ac').insertBefore(ld, document.getElementById('ac').firstChild); }
+  if (!ld) {
+    ld = document.createElement('div');
+    ld.id = 'ac-loading';
+    ld.className = 'ac-loading';
+    ld.innerHTML = '<div class="spin"></div><span>Анализируем...</span>';
+    document.getElementById('ac').insertBefore(ld, document.getElementById('ac').firstChild);
+  }
+}
+function hideACLoading() { const el = document.getElementById('ac-loading'); if(el) el.remove(); }
+
+// ── Eval Chart ──
+function clampScore(s) {
+  if (s === null || s === undefined) return 0;
+  return Math.max(-600, Math.min(600, s));
 }
 
-function hideACLoading() { const el=document.getElementById('ac-loading'); if(el)el.remove(); }
+function buildEvalChart() {
+  document.getElementById('eval-chart-panel').style.display = 'block';
+
+  const labels = ['Старт'];
+  const values = [clampScore(scores[0])];
+  const pointColors = ['#c9a84c'];
+
+  for (let i = 0; i < allMoves.length; i++) {
+    const moveNum = Math.floor(i / 2) + 1;
+    labels.push(moveNum + (i % 2 === 0 ? 'б' : 'ч'));
+    values.push(clampScore(scores[i + 1]));
+    pointColors.push('#c9a84c');
+  }
+
+  const ctx = document.getElementById('evalChart').getContext('2d');
+  if (evalChart) { evalChart.destroy(); evalChart = null; }
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 160);
+  grad.addColorStop(0,   'rgba(201,168,76,0.22)');
+  grad.addColorStop(0.5, 'rgba(201,168,76,0.06)');
+  grad.addColorStop(1,   'rgba(201,168,76,0.0)');
+
+  evalChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#c9a84c',
+        borderWidth: 1.5,
+        backgroundColor: grad,
+        fill: true,
+        tension: 0.3,
+        pointRadius: values.map((_, i) => i === curIdx ? 5 : 0),
+        pointHoverRadius: 5,
+        pointBackgroundColor: pointColors,
+        pointHoverBackgroundColor: '#e8c97a',
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#16161a',
+          borderColor: '#2a2a35',
+          borderWidth: 1,
+          titleColor: '#7a7a8a',
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          bodyColor: '#f0ede8',
+          bodyFont: { family: 'JetBrains Mono', size: 11 },
+          callbacks: {
+            title: items => labels[items[0].dataIndex],
+            label: item => {
+              const v = item.raw;
+              const ann = annotations[item.dataIndex - 1] || '';
+              return ' ' + (v >= 0 ? '+' : '') + (v/100).toFixed(2) + (ann ? '  ' + ann : '');
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#7a7a8a', font:{family:'JetBrains Mono',size:9}, maxTicksLimit:16, maxRotation:0 },
+          grid: { color:'rgba(42,42,53,0.8)' }
+        },
+        y: {
+          min: -600, max: 600,
+          ticks: {
+            color: '#7a7a8a',
+            font: { family:'JetBrains Mono', size:9 },
+            callback: v => (v >= 0 ? '+' : '') + (v/100).toFixed(1)
+          },
+          grid: { color:'rgba(42,42,53,0.8)' }
+        }
+      },
+      onClick: (e, elements) => {
+        if (elements.length > 0) goTo(elements[0].index);
+      }
+    }
+  });
+}
+
+function updateChartMarker(idx) {
+  if (!evalChart) return;
+  evalChart.data.datasets[0].pointRadius =
+    evalChart.data.labels.map((_, i) => i === idx ? 5 : 0);
+  evalChart.data.datasets[0].pointBackgroundColor =
+    evalChart.data.labels.map((_, i) => i === idx ? '#e8c97a' : '#c9a84c');
+  evalChart.update('none');
+}
 
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
-  if (e.target.tagName==='TEXTAREA') return;
-  if (e.key==='ArrowLeft') prev();
-  if (e.key==='ArrowRight') next();
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft')  prev();
+  if (e.key === 'ArrowRight') next();
 });
 
-// Init board
+// Init
 renderBoard();
 </script>
 </body>
