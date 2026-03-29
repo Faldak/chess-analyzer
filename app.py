@@ -376,7 +376,7 @@ def analyze_position():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-        @app.route("/trainer")
+@app.route("/trainer")
 def trainer():
     return render_template("trainer.html")
 
