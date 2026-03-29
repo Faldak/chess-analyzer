@@ -609,7 +609,7 @@ async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
       <div class="ac-summary">${summary}</div>
       <div class="ac-full" style="display:none;">${fullHtml}</div>
       <button class="ac-more-btn" onclick="toggleAnalysis(this)">Подробнее ▾</button>
-    `;
+    
     `;
     txt.style.display='block';
     txt.classList.remove('fade-in'); void txt.offsetWidth; txt.classList.add('fade-in');
@@ -709,3 +709,4 @@ $(document).ready(()=>{
 </script>
 </body>
 </html>
+
