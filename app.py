@@ -226,10 +226,7 @@ def annotate():
         })
 
     except Exception as e:
-        import traceback
-        print(f"Error in /annotate: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/analyze_move", methods=["POST"])
 def analyze_move():
