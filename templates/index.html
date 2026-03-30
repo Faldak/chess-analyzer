@@ -158,9 +158,11 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 .ac-full p{margin-bottom:6px;}
 .ac-full strong{color:var(--accent2);display:block;margin-top:10px;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
 @media(max-width:768px){
+  .board-area{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 0;}
   .ac-short{font-size:12px;}
   .ac-more-btn{font-size:10px;padding:5px 10px;}
 }
+.selected-sq{background:rgba(201,168,76,.8) !important;}
 </style>
 </head>
 <body>
@@ -292,6 +294,7 @@ function createBoard(fen, draggable) {
     pieceTheme: PIECE_THEME,
     draggable: draggable,
     showNotation: true,
+    onSquareClick: onSquareClick
   };
   if (draggable) {
     cfg.onDragStart = onDragStart;
@@ -320,6 +323,35 @@ function onDrop(source, target) {
 
 function onSnapEnd() {
   if (exploreGame) board.position(exploreGame.fen());
+}
+let selectedSquare = null;
+
+function onSquareClick(square) {
+  if (!exploreGame) return;
+
+  if (selectedSquare) {
+    const move = exploreGame.move({ from: selectedSquare, to: square, promotion: 'q' });
+    if (move) {
+      $('.square-55d63').removeClass('selected-sq');
+      selectedSquare = null;
+      board.position(exploreGame.fen());
+      clearHighlights();
+      highlightMove(move.from, move.to);
+      updateEvalBar(null);
+      fetchPositionAnalysis(exploreGame.fen());
+      fetchMoveExplanation(null, null, exploreGame.fen(), move.san);
+      return;
+    }
+    $('.square-55d63').removeClass('selected-sq');
+    selectedSquare = null;
+  }
+
+  const piece = exploreGame.get(square);
+  if (piece && piece.color === exploreGame.turn()) {
+    selectedSquare = square;
+    $('.square-55d63').removeClass('selected-sq');
+    $(`[data-square="${square}"]`).addClass('selected-sq');
+  }
 }
 
 function clearHighlights() {
