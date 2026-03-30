@@ -50,13 +50,49 @@ def is_sacrifice(board_before, move, score_before, score_after):
     moving_val = piece_values.get(moving_piece.piece_type if moving_piece else chess.PAWN, 0)
     return moving_val > captured_val and score_after is not None and score_before is not None
 
+def classify_move_accuracy(player_move, best_move, eval_before, eval_after, is_white):
+    """
+    Классифицирует точность хода на основе сравнения с best move и оценок.
+    
+    Возвращает кортеж: (accuracy_score, classification_text)
+    Где accuracy_score: 100, 75, 50, 25, 0
+    """
+    if not best_move:
+        return 100, "Неизвестно"
+    
+    # Сравниваем ход с best move
+    is_best_move = (player_move == best_move)
+    
+    # Вычисляем потерю оценки
+    if eval_before is None or eval_after is None:
+        return 100, "Неизвестно"
+    
+    eval_loss = eval_after - eval_before if is_white else eval_before - eval_after
+    
+    # Классификация по потере оценки
+    if is_best_move or eval_loss >= 0:
+        # Точный ход - best move или не ухудшил позицию
+        return 100, "Точно"
+    elif -50 <= eval_loss < 0:
+        # Незначительная ошибка (до 50 пешек)
+        return 75, "Хорошо"
+    elif -200 <= eval_loss < -50:
+        # Средняя ошибка (50-200 пешек)
+        return 50, "Нормально"
+    elif -500 <= eval_loss < -200:
+        # Крупная ошибка (200-500 пешек)
+        return 25, "Слабо"
+    else:
+        # Проигрышная ошибка (> 500 пешек)
+        return 0, "Ошибка"
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
 @app.route("/annotate", methods=["POST"])
 def annotate():
-    """Analyze full game and return per-move annotations + scores."""
+    """Analyze full game and return per-move annotations + accuracy scores."""
     data = request.get_json()
     pgn_text = data.get("pgn", "").strip()
     if not pgn_text:
@@ -81,15 +117,15 @@ def annotate():
         annotations = [""] * len(moves_san)
         scores = [None] * (len(moves_san) + 1)
         top_moves = [None] * (len(moves_san) + 1)
+        move_accuracy_scores = []  # [(player_move, best_move, accuracy%, classification)]
         white_accuracy = 0
         black_accuracy = 0
-        white_avg_loss = 0
-        black_avg_loss = 0
 
         if sf_path:
             board2 = game.board()
-            white_diffs = []
-            black_diffs = []
+            white_accuracies = []
+            black_accuracies = []
+            
             with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
                 # Evaluate initial position
                 info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
@@ -100,6 +136,16 @@ def annotate():
                     scores[0] = info["score"].white().score(mate_score=10000)
 
                 for i, mv in enumerate(move_objects):
+                    # Get best move BEFORE this move
+                    info_before = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
+                    best_move = None
+                    if isinstance(info_before, list) and len(info_before) > 0 and "pv" in info_before[0]:
+                        best_move = board2.san(info_before[0]["pv"][0])
+                    
+                    player_move = moves_san[i]
+                    eval_before = scores[i]
+                    
+                    # Push move and get new evaluation
                     sac = is_sacrifice(board2, mv, scores[i], None)
                     board2.push(mv)
 
@@ -111,40 +157,39 @@ def annotate():
                         scores[i+1] = info["score"].white().score(mate_score=10000)
                         top_moves[i+1] = []
 
+                    eval_after = scores[i+1]
+                    
+                    # Старая аннотация
                     if scores[i] is not None and scores[i+1] is not None:
                         is_white_move = (i % 2 == 0)
-                        # Positive diff = good move (improvement), negative = mistake
                         diff = scores[i+1] - scores[i] if is_white_move else scores[i] - scores[i+1]
                         annotations[i] = get_annotation(diff, sac)
-                        
-                        # Collect diffs for accuracy calculation
-                        if is_white_move:
-                            white_diffs.append(diff)
-                        else:
-                            black_diffs.append(diff)
+                    
+                    # Новая классификация точности
+                    is_white_move = (i % 2 == 0)
+                    accuracy_score, classification = classify_move_accuracy(
+                        player_move, best_move, eval_before, eval_after, is_white_move
+                    )
+                    
+                    move_accuracy_scores.append({
+                        "move_number": i + 1,
+                        "player_move": player_move,
+                        "best_move": best_move if best_move else "?",
+                        "eval_before": eval_before,
+                        "eval_after": eval_after,
+                        "accuracy": accuracy_score,
+                        "classification": classification,
+                        "color": "Белые" if is_white_move else "Чёрные"
+                    })
+                    
+                    if is_white_move:
+                        white_accuracies.append(accuracy_score)
+                    else:
+                        black_accuracies.append(accuracy_score)
             
-            # Calculate average loss (negative diffs) and accuracy
-            def calculate_accuracy(diffs):
-                if not diffs:
-                    return 0, 0
-                
-                # Average centipawn loss/gain across all moves
-                avg_loss = sum(diffs) / len(diffs) if diffs else 0
-                
-                # Accuracy formula: 100% - (avg_loss / 10)
-                # If avg_loss is negative (losses), it reduces accuracy
-                # If avg_loss is positive (gains), it increases accuracy
-                accuracy = max(0, 100.0 - (avg_loss / 10.0))
-                
-                return accuracy, avg_loss
-            
-            white_accuracy, white_avg_loss = calculate_accuracy(white_diffs)
-            black_accuracy, black_avg_loss = calculate_accuracy(black_diffs)
-            
-            white_accuracy = round(white_accuracy, 1)
-            black_accuracy = round(black_accuracy, 1)
-            white_avg_loss = round(white_avg_loss, 0)
-            black_avg_loss = round(black_avg_loss, 0)
+            # Вычисляем среднюю точность для каждого игрока
+            white_accuracy = round(sum(white_accuracies) / len(white_accuracies), 1) if white_accuracies else 0
+            black_accuracy = round(sum(black_accuracies) / len(black_accuracies), 1) if black_accuracies else 0
 
         return jsonify({
             "moves": moves_san,
@@ -154,10 +199,9 @@ def annotate():
             "annotations": annotations,
             "scores": scores,
             "top_moves": top_moves,
+            "move_accuracy_details": move_accuracy_scores,
             "white_accuracy": white_accuracy,
-            "black_accuracy": black_accuracy,
-            "white_avg_loss": white_avg_loss,
-            "black_avg_loss": black_avg_loss
+            "black_accuracy": black_accuracy
         })
 
     except Exception as e:
