@@ -130,16 +130,36 @@ def annotate():
                 info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
                 if isinstance(info, list):
                     scores[0] = info[0]["score"].white().score(mate_score=10000)
-                    top_moves[0] = [board2.san(i["pv"][0]) for i in info if "pv" in i and i["pv"]]
+                    top_moves[0] = []
+                    for i in info:
+                        if "pv" in i and i["pv"]:
+                            try:
+                                top_moves[0].append(board2.san(chess.Move.from_uci(str(i["pv"][0]))))
+                            except:
+                                pass
                 else:
                     scores[0] = info["score"].white().score(mate_score=10000)
+                    top_moves[0] = []
 
                 for i, mv in enumerate(move_objects):
                     # Get best move BEFORE this move
                     info_before = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
                     best_move = None
-                    if isinstance(info_before, list) and len(info_before) > 0 and "pv" in info_before[0]:
-                        best_move = board2.san(info_before[0]["pv"][0])
+                    if info_before:
+                        if isinstance(info_before, list):
+                            if info_before[0].get("pv"):
+                                move_uci = info_before[0]["pv"][0]
+                                try:
+                                    best_move = board2.san(chess.Move.from_uci(str(move_uci)))
+                                except:
+                                    best_move = None
+                        elif isinstance(info_before, dict) and "pv" in info_before:
+                            if info_before["pv"]:
+                                move_uci = info_before["pv"][0]
+                                try:
+                                    best_move = board2.san(chess.Move.from_uci(str(move_uci)))
+                                except:
+                                    best_move = None
                     
                     player_move = moves_san[i]
                     eval_before = scores[i]
@@ -151,9 +171,23 @@ def annotate():
                     info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
                     if isinstance(info, list):
                         scores[i+1] = info[0]["score"].white().score(mate_score=10000)
-                        top_moves[i+1] = [board2.san(j["pv"][0]) for j in info if "pv" in j and j["pv"]]
-                    else:
+                        top_moves[i+1] = []
+                        for j in info:
+                            if "pv" in j and j["pv"]:
+                                try:
+                                    top_moves[i+1].append(board2.san(chess.Move.from_uci(str(j["pv"][0]))))
+                                except:
+                                    pass
+                    elif isinstance(info, dict):
                         scores[i+1] = info["score"].white().score(mate_score=10000)
+                        top_moves[i+1] = []
+                        if "pv" in info and info["pv"]:
+                            try:
+                                top_moves[i+1].append(board2.san(chess.Move.from_uci(str(info["pv"][0]))))
+                            except:
+                                pass
+                    else:
+                        scores[i+1] = None
                         top_moves[i+1] = []
 
                     eval_after = scores[i+1]
