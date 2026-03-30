@@ -40,6 +40,14 @@ textarea::placeholder{color:var(--text-muted);}
 .btn-outline:hover{background:rgba(201,168,76,.1);}
 .players-bar{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;align-items:center;justify-content:space-between;}
 .player{display:flex;align-items:center;gap:7px;}
+.accuracy-bar{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+.acc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.acc-row:last-child{margin-bottom:0;}
+.acc-player{display:flex;align-items:center;gap:8px;flex:1;}
+.acc-color{width:12px;height:12px;border-radius:3px;border:1px solid var(--border);}
+.acc-color.white{background:#f0ede8;} .acc-color.black{background:#1a1a1a;}
+.acc-name{font-size:12px;font-weight:500;}
+.acc-val{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);}
 .pc{width:12px;height:12px;border-radius:3px;border:1px solid var(--border);}
 .pc.white{background:#f0ede8;} .pc.black{background:#1a1a1a;}
 .pn{font-size:12px;font-weight:500;}
@@ -270,6 +278,16 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
         <div class="rb" id="rbadge">*</div>
         <div class="player"><div class="pc black"></div><div class="pn" id="bname">Чёрные</div></div>
       </div>
+      <div class="accuracy-bar" id="accuracy-bar">
+        <div class="acc-row">
+          <div class="acc-player"><div class="acc-color white"></div><div class="acc-name" id="acc-wname">Белые</div></div>
+          <div class="acc-val" id="acc-white">—</div>
+        </div>
+        <div class="acc-row">
+          <div class="acc-player"><div class="acc-color black"></div><div class="acc-name" id="acc-bname">Чёрные</div></div>
+          <div class="acc-val" id="acc-black">—</div>
+        </div>
+      </div>
       <div class="moves-grid" id="moves-grid"></div>
     </div>
   </div>
@@ -301,6 +319,8 @@ let arrows = [];
 let drawingArrow = null;
 let justDrewArrow = false;
 let pgnStore    = '';
+let whiteAccuracy = 0;
+let blackAccuracy = 0;
 
 const PIECE_THEME = 'https://lichess1.org/assets/piece/cburnett/{piece}.svg';
 
@@ -490,6 +510,8 @@ async function loadGame() {
     annotations  = data.annotations || [];
     scores       = data.scores || [];
     topMovesData = data.top_moves || [];
+    whiteAccuracy = data.white_accuracy || 0;
+    blackAccuracy = data.black_accuracy || 0;
     gameLoaded   = true;
     pgnStore     = pgn;
 
@@ -506,6 +528,13 @@ async function loadGame() {
     document.getElementById('bname').textContent         = data.black;
     document.getElementById('rbadge').textContent        = data.result;
     document.getElementById('players-bar').style.display = 'flex';
+    
+    // Update accuracy display
+    document.getElementById('acc-wname').textContent     = data.white;
+    document.getElementById('acc-bname').textContent     = data.black;
+    document.getElementById('acc-white').textContent     = whiteAccuracy + '%';
+    document.getElementById('acc-black').textContent     = blackAccuracy + '%';
+    document.getElementById('accuracy-bar').style.display = 'block';
 
     buildMovesGrid();
     document.getElementById('moves-panel').style.display = 'block';
