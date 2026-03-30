@@ -394,7 +394,8 @@ function onSnapEnd() {
 }
 let selectedSquare = null;
 
-function onSquareClick(square) {
+function onSquareClick(square, event) {
+  if (event && event.button === 2) return; // Ignore right click
   if (!exploreGame) return;
 
   if (selectedSquare) {
@@ -718,9 +719,9 @@ function setMode(m) {
     fetchPositionAnalysis(exploreGame.fen());
     // Добавляем обработку кликов вручную для мобилки
     setTimeout(() => {
-      $('#chessboard').find('.square-55d63').off('click').on('click', function() {
+      $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         const sq = $(this).attr('data-square');
-        if (sq) onSquareClick(sq);
+        if (sq) onSquareClick(sq, e);
       });
     }, 300);
   } else {

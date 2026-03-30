@@ -406,9 +406,9 @@ function initBoard() {
     onSquareClick: onSquareClick
   });
   // Добавляем обработку кликов для мобилки
-  $('#chessboard').find('.square-55d63').off('click').on('click', function() {
-    const sq = $(this).attr('data-square');
-    if (sq) onSquareClick(sq);
+$('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
+        const sq = $(this).attr('data-square');
+        if (sq) onSquareClick(sq, e);
   });
 
   // Arrows
@@ -462,7 +462,8 @@ function initBoard() {
   });
 }
 
-function onSquareClick(square) {
+function onSquareClick(square, event) {
+  if (event && event.button === 2) return; // Ignore right click
   if (!gameActive || gameChess.game_over()) return;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
   if (!myTurn) return;
