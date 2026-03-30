@@ -227,19 +227,19 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   </div>
 
   <div class="panel">
-    <div class="ph"><div class="dot"></div><h2>Анализ ИИ</h2></div>
+    <div class="ph"><div class="dot"></div><h2 data-i18n="ai_analysis">Анализ ИИ</h2></div>
     <div class="ac" id="ac">
-      <div class="ac-empty" id="ac-empty"><span>Загрузи партию</span></div>
-      <div class="ac-hdr" id="ac-hdr" style="display:none;"><span id="ac-hdr-txt">Оценка хода</span></div>
+      <div class="ac-empty" id="ac-empty"><span data-i18n="load_game_hint">Загрузи партию</span></div>
+      <div class="ac-hdr" id="ac-hdr" style="display:none;"><span id="ac-hdr-txt" data-i18n="move_eval">Оценка хода</span></div>
       <div class="ac-scores" id="ac-scores" style="display:none;">
-        <div class="sc-item"><div class="sc-lbl">ДО</div><div class="sc-val" id="sc-b">—</div></div>
-        <div class="sc-item"><div class="sc-lbl">ПОСЛЕ</div><div class="sc-val" id="sc-a">—</div></div>
-        <div class="sc-item"><div class="sc-lbl">ΔΔΔΔ</div><div class="sc-val" id="sc-d">—</div></div>
+        <div class="sc-item"><div class="sc-lbl" data-i18n="before">ДО</div><div class="sc-val" id="sc-b">—</div></div>
+        <div class="sc-item"><div class="sc-lbl" data-i18n="after">ПОСЛЕ</div><div class="sc-val" id="sc-a">—</div></div>
+        <div class="sc-item"><div class="sc-lbl" data-i18n="change">ΔΔΔΔ</div><div class="sc-val" id="sc-d">—</div></div>
       </div>
       <div class="ac-text" id="ac-text" style="display:none;"></div>
     </div>
     <div class="pb" style="padding-top:0;">
-      <button class="btn btn-outline" id="analyze-btn" style="display:none;" onclick="analyzeCurrentMove()">🔍 Объяснить ход / позицию</button>
+      <button class="btn btn-outline" id="analyze-btn" style="display:none;" onclick="analyzeCurrentMove()" data-i18n="explain_move">🔍 Объяснить ход / позицию</button>
     </div>
   </div>
 </div>
@@ -247,10 +247,10 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <!-- CENTER -->
 <div class="board-area">
   <div class="mode-row" id="mode-row" style="width:400px;display:none;">
-    <button class="mode-btn active" id="mode-review" onclick="setMode('review')">Просмотр партии</button>
-    <button class="mode-btn" id="mode-explore" onclick="setMode('explore')">Исследование</button>
+    <button class="mode-btn active" id="mode-review" onclick="setMode('review')" data-i18n="game_review">Просмотр партии</button>
+    <button class="mode-btn" id="mode-explore" onclick="setMode('explore')" data-i18n="exploration">Исследование</button>
   </div>
-  <div class="explore-banner" id="explore-banner">Режим исследования — перетаскивай фигуры для анализа</div>
+  <div class="explore-banner" id="explore-banner" data-i18n="explore_hint">Режим исследования — перетаскивай фигуры для анализа</div>
 
   <div class="board-row">
     <div class="eval-bar-wrap">
@@ -271,8 +271,8 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
   <div class="panel" id="eval-chart-panel" style="display:none;width:100%;">
     <div class="ph">
-      <div class="dot"></div><h2>График оценки</h2>
-      <span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">кликни → перейти к ходу</span>
+      <div class="dot"></div><h2 data-i18n="eval_chart">График оценки</h2>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" data-i18n="click_jump">кликни → перейти к ходу</span>
     </div>
     <div class="eval-chart-wrap">
       <canvas id="evalChart" height="90"></canvas>
@@ -315,9 +315,9 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   </div>
 
   <div class="panel" id="engine-panel" style="display:none;">
-    <div class="ph"><div class="dot"></div><h2>Анализ движка</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="engine-depth-lbl">depth 15</span></div>
+    <div class="ph"><div class="dot"></div><h2 data-i18n="engine_analysis">Анализ движка</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="engine-depth-lbl">depth 15</span></div>
     <div class="pb" style="padding:10px 14px;">
-      <button class="btn btn-outline" id="engine-cancel-btn" style="display:none; margin-bottom: 8px;" onclick="cancelEngineMove()">✕ Отменить ход</button>
+      <button class="btn btn-outline" id="engine-cancel-btn" style="display:none; margin-bottom: 8px;" onclick="cancelEngineMove()" data-i18n="cancel_move">✕ Отменить ход</button>
       <div id="engine-lines"></div>
     </div>
   </div>
@@ -356,10 +356,27 @@ function updateLanguage(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (translations[lang] && translations[lang][key]) {
-      if (el.placeholder !== undefined) {
-        el.placeholder = translations[lang][key];
+      const text = translations[lang][key];
+      
+      // Handle different element types
+      if (el.tagName === 'INPUT' && el.type === 'text') {
+        el.placeholder = text;
+      } else if (el.tagName === 'TEXTAREA') {
+        el.placeholder = text;
+      } else if (el.tagName === 'OPTION') {
+        el.textContent = text;
       } else {
-        el.textContent = translations[lang][key];
+        // For regular elements, replace text but preserve child elements
+        // Find the text node and non-element nodes
+        let textNodes = [];
+        for (let i = el.childNodes.length - 1; i >= 0; i--) {
+          const node = el.childNodes[i];
+          if (node.nodeType === 3) { // Text node
+            el.removeChild(node);
+          }
+        }
+        // Add new text at the beginning
+        el.insertAdjacentText('afterbegin', text);
       }
     }
   });

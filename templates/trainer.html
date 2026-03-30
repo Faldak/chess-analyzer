@@ -208,24 +208,24 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 
 <div id="setup-screen">
   <div class="setup-card">
-    <h2>⚔️ Новая партия</h2>
+    <h2 data-i18n="new_game">⚔️ Новая партия</h2>
     <div class="setup-section">
-      <label class="setup-label">Играю за</label>
+      <label class="setup-label" data-i18n="play_as">Играю за</label>
       <div class="color-row">
-        <div class="color-btn active" id="btn-white" onclick="selectColor('white')"><span class="icon">♔</span>Белые</div>
-        <div class="color-btn" id="btn-black" onclick="selectColor('black')"><span class="icon">♚</span>Чёрные</div>
-        <div class="color-btn" id="btn-random" onclick="selectColor('random')"><span class="icon">🎲</span>Случайно</div>
+        <div class="color-btn active" id="btn-white" onclick="selectColor('white')"><span class="icon">♔</span><span data-i18n="white">Белые</span></div>
+        <div class="color-btn" id="btn-black" onclick="selectColor('black')"><span class="icon">♚</span><span data-i18n="black">Чёрные</span></div>
+        <div class="color-btn" id="btn-random" onclick="selectColor('random')"><span class="icon">🎲</span><span data-i18n="random">Случайно</span></div>
       </div>
     </div>
     <div class="setup-section">
-      <label class="setup-label">Уровень тренера</label>
+      <label class="setup-label" data-i18n="choose_level">Уровень тренера</label>
       <div class="level-row">
-        <div class="level-btn novice" id="lv-novice" onclick="selectLevel('novice')"><span class="lv-icon">🌱</span><div class="lv-name">Новичок</div><div class="lv-desc">Skill 3</div></div>
-        <div class="level-btn medium active" id="lv-medium" onclick="selectLevel('medium')"><span class="lv-icon">⚔️</span><div class="lv-name">Средний</div><div class="lv-desc">Skill 10</div></div>
-        <div class="level-btn master" id="lv-master" onclick="selectLevel('master')"><span class="lv-icon">👑</span><div class="lv-name">Мастер</div><div class="lv-desc">Skill 18</div></div>
+        <div class="level-btn novice" id="lv-novice" onclick="selectLevel('novice')"><span class="lv-icon">🌱</span><div class="lv-name" data-i18n="novice">Новичок</div><div class="lv-desc">Skill 3</div></div>
+        <div class="level-btn medium active" id="lv-medium" onclick="selectLevel('medium')"><span class="lv-icon">⚔️</span><div class="lv-name" data-i18n="medium">Средний</div><div class="lv-desc">Skill 10</div></div>
+        <div class="level-btn master" id="lv-master" onclick="selectLevel('master')"><span class="lv-icon">👑</span><div class="lv-name" data-i18n="master">Мастер</div><div class="lv-desc">Skill 18</div></div>
       </div>
     </div>
-    <button class="start-btn" onclick="startGame()">🎮 Начать партию</button>
+    <button class="start-btn" onclick="startGame()" data-i18n="start_game">🎮 Начать партию</button>
   </div>
 </div>
 
@@ -234,8 +234,8 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
     <div class="trainer-head">
       <div class="trainer-avatar">🎓</div>
       <div>
-        <div class="trainer-name" id="trainer-name">Тренер</div>
-        <div class="trainer-title" id="trainer-title">Средний уровень</div>
+        <div class="trainer-name" id="trainer-name" data-i18n="trainer_mode">Тренер</div>
+        <div class="trainer-title" id="trainer-title" data-i18n="medium">Средний уровень</div>
       </div>
       <div class="trainer-status" id="trainer-status"></div>
     </div>
@@ -277,27 +277,27 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 
   <div class="game-info">
     <div class="panel">
-      <div class="ph"><div class="dot green"></div><h2>Статус партии</h2></div>
+      <div class="ph"><div class="dot green"></div><h2 data-i18n="game_result">Статус партии</h2></div>
       <div class="pb">
         <div class="stat-row">
-          <div class="stat-box"><div class="stat-label">ХОД</div><div class="stat-val" id="stat-move">1</div></div>
+          <div class="stat-box"><div class="stat-label" data-i18n="moves_made">ХОД</div><div class="stat-val" id="stat-move">1</div></div>
           <div class="stat-box"><div class="stat-label">ОЦЕНКА</div><div class="stat-val" id="stat-score">0.00</div></div>
         </div>
         <div style="margin-top:10px;">
           <div class="stat-label" style="margin-bottom:6px;">ОЧЕРЕДЬ ХОДА</div>
-          <div style="font-size:13px;font-weight:600;" id="stat-turn">Белые</div>
+          <div style="font-size:13px;font-weight:600;" id="stat-turn" data-i18n="white">Белые</div>
         </div>
       </div>
     </div>
     <div class="panel">
-      <div class="ph"><div class="dot"></div><h2>Ходы партии</h2></div>
+      <div class="ph"><div class="dot"></div><h2 data-i18n="moves">Ходы партии</h2></div>
       <div class="pb" style="padding:8px;"><div class="moves-list" id="moves-list"></div></div>
     </div>
     <div class="panel">
-      <div class="ph"><div class="dot"></div><h2>После партии</h2></div>
+      <div class="ph"><div class="dot"></div><h2 data-i18n="results">После партии</h2></div>
       <div class="pb">
         <button class="ctrl-btn" style="width:100%;border-color:rgba(201,168,76,.4);color:var(--accent);" onclick="showPGN()">📋 Получить PGN</button>
-        <button class="ctrl-btn" style="width:100%;margin-top:8px;" onclick="newGame()">🔄 Новая партия</button>
+        <button class="ctrl-btn" style="width:100%;margin-top:8px;" onclick="newGame()" data-i18n="play_again">🔄 Ещё партию</button>
       </div>
     </div>
   </div>
@@ -306,7 +306,7 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 <div id="gameover-overlay">
   <div class="gameover-card">
     <div class="gameover-icon" id="go-icon">♟</div>
-    <div class="gameover-title" id="go-title">Партия завершена</div>
+      <div class="gameover-title" id="go-title" data-i18n="game_over">Партия завершена</div>
     <div class="gameover-sub" id="go-sub"></div>
     <div class="gameover-btns">
       <button class="go-btn primary" onclick="showPGN()">📋 Получить PGN партии</button>
@@ -359,10 +359,27 @@ function updateLanguage(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (translations[lang] && translations[lang][key]) {
-      if (el.placeholder !== undefined) {
-        el.placeholder = translations[lang][key];
+      const text = translations[lang][key];
+      
+      // Handle different element types
+      if (el.tagName === 'INPUT' && el.type === 'text') {
+        el.placeholder = text;
+      } else if (el.tagName === 'TEXTAREA') {
+        el.placeholder = text;
+      } else if (el.tagName === 'OPTION') {
+        el.textContent = text;
       } else {
-        el.textContent = translations[lang][key];
+        // For regular elements, replace text but preserve child elements
+        // Find the text node and non-element nodes
+        let textNodes = [];
+        for (let i = el.childNodes.length - 1; i >= 0; i--) {
+          const node = el.childNodes[i];
+          if (node.nodeType === 3) { // Text node
+            el.removeChild(node);
+          }
+        }
+        // Add new text at the beginning
+        el.insertAdjacentText('afterbegin', text);
       }
     }
   });
