@@ -372,6 +372,7 @@ function createBoard(fen, draggable) {
 }
 
 function onDragStart(source, piece) {
+  if (drawingArrow) return false; // Prevent dragging when drawing arrows
   if (!exploreGame || exploreGame.game_over()) return false;
   if (exploreGame.turn() === 'w' && piece.startsWith('b')) return false;
   if (exploreGame.turn() === 'b' && piece.startsWith('w')) return false;

@@ -496,6 +496,7 @@ function onSquareClick(square) {
 }
 
 function onDragStart(source, piece) {
+  if (drawingArrow) return false; // Prevent dragging when drawing arrows
   if (!gameActive) return false;
   if (gameChess.game_over()) return false;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
