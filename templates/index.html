@@ -195,6 +195,16 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <!-- LEFT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
   <div class="panel">
+    <div class="ph"><div class="dot"></div><h2>Партия PGN</h2></div>
+    <div class="pb">
+      <label class="pgn-label">// Вставь PGN партии</label>
+      <textarea id="pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6..."></textarea>
+      <div id="err" class="err"></div>
+      <button class="btn" id="load-btn" onclick="loadGame()"><span id="btn-txt">♟ Загрузить и анализировать</span></button>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="ph"><div class="dot"></div><h2>Анализ ИИ</h2></div>
     <div class="ac" id="ac">
       <div class="ac-empty" id="ac-empty"><span>Загрузи партию</span></div>
@@ -250,16 +260,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
 <!-- RIGHT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
-  <div class="panel">
-    <div class="ph"><div class="dot"></div><h2>Партия PGN</h2></div>
-    <div class="pb">
-      <label class="pgn-label">// Вставь PGN партии</label>
-      <textarea id="pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6..."></textarea>
-      <div id="err" class="err"></div>
-      <button class="btn" id="load-btn" onclick="loadGame()"><span id="btn-txt">♟ Загрузить и анализировать</span></button>
-    </div>
-  </div>
-
   <div class="panel moves-wrap" id="moves-panel">
     <div class="ph"><div class="dot"></div><h2>Ходы</h2></div>
     <div class="pb" style="padding:10px;">
