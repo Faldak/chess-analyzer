@@ -299,6 +299,7 @@ let gameLoaded  = false;
 let evalChart   = null;
 let arrows = [];
 let drawingArrow = null;
+let justDrewArrow = false;
 let pgnStore    = '';
 
 const PIECE_THEME = 'https://lichess1.org/assets/piece/cburnett/{piece}.svg';
@@ -310,8 +311,7 @@ function createBoard(fen, draggable) {
     position: fen || 'start',
     pieceTheme: PIECE_THEME,
     draggable: draggable,
-    showNotation: true,
-    onSquareClick: onSquareClick
+    showNotation: true
   };
   if (draggable) {
     cfg.onDragStart = onDragStart;
@@ -721,7 +721,13 @@ function setMode(m) {
     setTimeout(() => {
       $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         const sq = $(this).attr('data-square');
-        if (sq) onSquareClick(sq, e);
+        if (sq) {
+          if (e.button === 0 && justDrewArrow) {
+            clearArrows();
+            justDrewArrow = false;
+          }
+          onSquareClick(sq, e);
+        }
       });
     }, 300);
   } else {
@@ -953,6 +959,7 @@ function clearTempArrow() {
 function addArrow(from, to) {
   if (from === to) return;
   arrows.push({ from, to });
+  justDrewArrow = true;
   drawArrow(from, to);
 }
 

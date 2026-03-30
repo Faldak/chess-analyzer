@@ -337,6 +337,7 @@ let selectedSquare = null;
 let evalVisible = true;
 let arrows = [];
 let drawingArrow = null;
+let justDrewArrow = false;
 
 const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
 
@@ -402,13 +403,18 @@ function initBoard() {
     draggable: true,
     onDragStart: onDragStart,
     onDrop: onDrop,
-    onSnapEnd: onSnapEnd,
-    onSquareClick: onSquareClick
+    onSnapEnd: onSnapEnd
   });
   // Добавляем обработку кликов для мобилки
 $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         const sq = $(this).attr('data-square');
-        if (sq) onSquareClick(sq, e);
+        if (sq) {
+          if (e.button === 0 && justDrewArrow) {
+            clearArrows();
+            justDrewArrow = false;
+          }
+          onSquareClick(sq, e);
+        }
   });
 
   // Arrows
@@ -812,6 +818,7 @@ function clearTempArrow() {
 function addArrow(from, to) {
   if (from === to) return;
   arrows.push({ from, to });
+  justDrewArrow = true;
   drawArrow(from, to);
 }
 
