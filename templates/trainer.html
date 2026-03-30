@@ -409,10 +409,6 @@ function initBoard() {
 $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         const sq = $(this).attr('data-square');
         if (sq) {
-          if (e.button === 0 && justDrewArrow) {
-            clearArrows();
-            justDrewArrow = false;
-          }
           onSquareClick(sq, e);
         }
   });
@@ -462,6 +458,9 @@ $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
+      justDrewArrow = true;
+      e.preventDefault();
+      e.stopImmediatePropagation();
     }
     drawingArrow = null;
     clearTempArrow();
@@ -469,6 +468,13 @@ $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
 }
 
 function onSquareClick(square, event) {
+  // Если только что нарисовали стрелку, очищаем её и останавливаемся
+  if (justDrewArrow) {
+    clearArrows();
+    justDrewArrow = false;
+    return;
+  }
+  
   if (event && event.button === 2) return; // Ignore right click
   if (!gameActive || gameChess.game_over()) return;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');

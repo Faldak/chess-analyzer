@@ -365,6 +365,9 @@ function createBoard(fen, draggable) {
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
+      justDrewArrow = true;
+      e.preventDefault();
+      e.stopImmediatePropagation();
     }
     drawingArrow = null;
     clearTempArrow();
@@ -395,6 +398,13 @@ function onSnapEnd() {
 let selectedSquare = null;
 
 function onSquareClick(square, event) {
+  // Если только что нарисовали стрелку, очищаем её и останавливаемся
+  if (justDrewArrow) {
+    clearArrows();
+    justDrewArrow = false;
+    return;
+  }
+  
   if (event && event.button === 2) return; // Ignore right click
   if (!exploreGame) return;
 
@@ -722,10 +732,6 @@ function setMode(m) {
       $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         const sq = $(this).attr('data-square');
         if (sq) {
-          if (e.button === 0 && justDrewArrow) {
-            clearArrows();
-            justDrewArrow = false;
-          }
           onSquareClick(sq, e);
         }
       });
@@ -1035,6 +1041,9 @@ $(document).ready(()=>{
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
+      justDrewArrow = true;
+      e.preventDefault();
+      e.stopImmediatePropagation();
     }
     drawingArrow = null;
     clearTempArrow();
