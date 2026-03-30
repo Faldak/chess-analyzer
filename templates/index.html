@@ -195,28 +195,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <!-- LEFT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
   <div class="panel">
-    <div class="ph"><div class="dot"></div><h2>Партия PGN</h2></div>
-    <div class="pb">
-      <label class="pgn-label">// Вставь PGN партии</label>
-      <textarea id="pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6..."></textarea>
-      <div id="err" class="err"></div>
-      <button class="btn" id="load-btn" onclick="loadGame()"><span id="btn-txt">♟ Загрузить и анализировать</span></button>
-    </div>
-  </div>
-
-  <div class="panel moves-wrap" id="moves-panel">
-    <div class="ph"><div class="dot"></div><h2>Ходы</h2></div>
-    <div class="pb" style="padding:10px;">
-      <div class="players-bar" id="players-bar">
-        <div class="player"><div class="pc white"></div><div class="pn" id="wname">Белые</div></div>
-        <div class="rb" id="rbadge">*</div>
-        <div class="player"><div class="pc black"></div><div class="pn" id="bname">Чёрные</div></div>
-      </div>
-      <div class="moves-grid" id="moves-grid"></div>
-    </div>
-  </div>
-
-  <div class="panel">
     <div class="ph"><div class="dot"></div><h2>Анализ ИИ</h2></div>
     <div class="ac" id="ac">
       <div class="ac-empty" id="ac-empty"><span>Загрузи партию</span></div>
@@ -272,9 +250,32 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
 <!-- RIGHT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
+  <div class="panel">
+    <div class="ph"><div class="dot"></div><h2>Партия PGN</h2></div>
+    <div class="pb">
+      <label class="pgn-label">// Вставь PGN партии</label>
+      <textarea id="pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6..."></textarea>
+      <div id="err" class="err"></div>
+      <button class="btn" id="load-btn" onclick="loadGame()"><span id="btn-txt">♟ Загрузить и анализировать</span></button>
+    </div>
+  </div>
+
+  <div class="panel moves-wrap" id="moves-panel">
+    <div class="ph"><div class="dot"></div><h2>Ходы</h2></div>
+    <div class="pb" style="padding:10px;">
+      <div class="players-bar" id="players-bar">
+        <div class="player"><div class="pc white"></div><div class="pn" id="wname">Белые</div></div>
+        <div class="rb" id="rbadge">*</div>
+        <div class="player"><div class="pc black"></div><div class="pn" id="bname">Чёрные</div></div>
+      </div>
+      <div class="moves-grid" id="moves-grid"></div>
+    </div>
+  </div>
+
   <div class="panel" id="engine-panel" style="display:none;">
     <div class="ph"><div class="dot"></div><h2>Анализ движка</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="engine-depth-lbl">depth 15</span></div>
     <div class="pb" style="padding:10px 14px;">
+      <button class="btn btn-outline" id="engine-cancel-btn" style="display:none; margin-bottom: 8px;" onclick="cancelEngineMove()">✕ Отменить ход</button>
       <div id="engine-lines"></div>
     </div>
   </div>
@@ -498,6 +499,9 @@ function goTo(idx) {
 
   if (mode === 'explore') exploreGame = new Chess(chessGame.fen());
 
+  // сброс Engine preview, если есть
+  cancelEngineMove();
+
   updateMoveHL();
   updateNav();
   updateEvalForIdx(idx);
@@ -602,22 +606,46 @@ async function fetchPositionAnalysis(fen) {
   fetchEngineLines(fen);
 }
 
+let enginePreview = null;
+let enginePreviewFromFen = null;
+
 function flashMove(san) {
-  const game = mode === 'explore' ? exploreGame : chessGame;
-  if (!game) return;
-  try {
-    const mv = game.move(san);
-    if (mv) {
-      board.position(game.fen(), false);
-      clearHighlights();
-      highlightMove(mv.from, mv.to);
-      setTimeout(() => {
-        game.undo();
-        board.position(game.fen(), false);
-        setTimeout(highlightLastMove, 30);
-      }, 700);
-    }
-  } catch(e) {}
+  // переименовано и новый behavior: применить ход, но не откатывать.
+  applyEngineMove(san);
+}
+
+function applyEngineMove(san) {
+  const currentGame = (mode==='explore' ? exploreGame : chessGame);
+  if (!currentGame) return;
+
+  // Сброс предыдущего превью
+  if (enginePreview) {
+    cancelEngineMove();
+  }
+
+  const tmp = new Chess(currentGame.fen());
+  const mv = tmp.move(san);
+  if (!mv) return;
+
+  enginePreview = mv;
+  enginePreviewFromFen = currentGame.fen();
+
+  board.position(tmp.fen(), false);
+  clearHighlights();
+  highlightMove(mv.from, mv.to);
+  document.getElementById('engine-cancel-btn').style.display = 'inline-flex';
+}
+
+function cancelEngineMove() {
+  if (!enginePreview || !enginePreviewFromFen) return;
+
+  board.position(enginePreviewFromFen, false);
+  clearHighlights();
+  highlightLastMove();
+
+  enginePreview = null;
+  enginePreviewFromFen = null;
+  document.getElementById('engine-cancel-btn').style.display = 'none';
 }
 
 // ── Mode ──
@@ -644,6 +672,8 @@ function setMode(m) {
     createBoard(chessGame.fen(), false);
     setTimeout(highlightLastMove, 50);
   }
+  // Сброс Engine preview при смене режима
+  cancelEngineMove();
 }
 
 // ── AI ──
