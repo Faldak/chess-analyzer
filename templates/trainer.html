@@ -244,10 +244,13 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
       <div class="pb-thinking" id="top-thinking"><div class="spin"></div><span>думает...</span></div>
     </div>
     <div class="board-row">
-      <div class="eval-bar-wrap">
-        <div class="eval-label" id="eval-top-lbl"></div>
-        <div class="eval-bar"><div class="eval-fill" id="eval-fill" style="height:50%;"></div></div>
-        <div class="eval-label" id="eval-bot-lbl">0</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <button id="eval-toggle-btn" onclick="toggleEvalBar()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:10px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;writing-mode:horizontal-tb;">👁 шкала</button>
+        <div class="eval-bar-wrap" id="eval-bar-wrap">
+          <div class="eval-label" id="eval-top-lbl"></div>
+          <div class="eval-bar"><div class="eval-fill" id="eval-fill" style="height:50%;"></div></div>
+          <div class="eval-label" id="eval-bot-lbl">0</div>
+        </div>
       </div>
       <div id="chessboard"></div>
     </div>
@@ -330,6 +333,7 @@ let lastFrom = null, lastTo = null;
 let currentScore = 0;
 let gameResult = '*';
 let selectedSquare = null;
+let evalVisible = true;
 
 const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
 
@@ -586,6 +590,18 @@ function setTrainerThinking(thinking) {
   document.getElementById('top-thinking').style.display = thinking ? 'flex' : 'none';
   document.getElementById('trainer-status').style.background = thinking ? 'var(--accent)' : 'var(--green)';
   document.getElementById('trainer-status').style.boxShadow = thinking ? '0 0 6px var(--accent)' : '0 0 6px var(--green)';
+}
+
+function toggleEvalBar() {
+  evalVisible = !evalVisible;
+  const wrap = document.getElementById('eval-bar-wrap');
+  const btn = document.getElementById('eval-toggle-btn');
+  if (!wrap || !btn) return;
+  wrap.style.visibility = evalVisible ? 'visible' : 'hidden';
+  wrap.style.opacity = evalVisible ? '1' : '0';
+  btn.style.borderColor = evalVisible ? 'var(--border)' : 'var(--accent)';
+  btn.style.color = evalVisible ? 'var(--text-muted)' : 'var(--accent)';
+  btn.textContent = evalVisible ? '👁 шкала' : '👁 скрыта';
 }
 
 function updateStats() {
