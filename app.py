@@ -117,7 +117,6 @@ def annotate():
         annotations = [""] * len(moves_san)
         scores = [None] * (len(moves_san) + 1)
         top_moves = [None] * (len(moves_san) + 1)
-        move_accuracy_scores = []  # [(player_move, best_move, accuracy%, classification)]
         white_accuracy = 0
         black_accuracy = 0
 
@@ -171,17 +170,6 @@ def annotate():
                         player_move, best_move, eval_before, eval_after, is_white_move
                     )
                     
-                    move_accuracy_scores.append({
-                        "move_number": i + 1,
-                        "player_move": player_move,
-                        "best_move": best_move if best_move else "?",
-                        "eval_before": eval_before,
-                        "eval_after": eval_after,
-                        "accuracy": accuracy_score,
-                        "classification": classification,
-                        "color": "Белые" if is_white_move else "Чёрные"
-                    })
-                    
                     if is_white_move:
                         white_accuracies.append(accuracy_score)
                     else:
@@ -199,7 +187,6 @@ def annotate():
             "annotations": annotations,
             "scores": scores,
             "top_moves": top_moves,
-            "move_accuracy_details": move_accuracy_scores,
             "white_accuracy": white_accuracy,
             "black_accuracy": black_accuracy
         })
