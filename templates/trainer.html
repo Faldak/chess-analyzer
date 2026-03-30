@@ -397,12 +397,10 @@ function initBoard() {
     onSquareClick: onSquareClick
   });
   // Добавляем обработку кликов для мобилки
-  setTimeout(() => {
-    $('#chessboard').find('.square-55d63').off('click').on('click', function() {
-      const sq = $(this).attr('data-square');
-      if (sq) onSquareClick(sq);
-    });
-  }, 300);
+  $('#chessboard').find('.square-55d63').off('click').on('click', function() {
+    const sq = $(this).attr('data-square');
+    if (sq) onSquareClick(sq);
+  });
 }
 
 function onDragStart(source, piece) {
