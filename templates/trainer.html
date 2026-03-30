@@ -254,7 +254,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
         </div>
       </div>
       <div id="chessboard"></div>
-      <div id="arrow-overlay" class="arrow-overlay"><svg id="arrow-svg" width="400" height="400"></svg></div>
     </div>
     <div class="player-bar" id="bar-bottom">
       <div class="pb-color" id="bot-color-dot"></div>
@@ -413,7 +412,20 @@ function initBoard() {
   });
 
   // Arrows
+  const boardEl = document.getElementById('chessboard');
+  boardEl.style.position = 'relative';
+  const overlay = document.getElementById('arrow-overlay');
+  boardEl.appendChild(overlay);
+  overlay.style.position = 'absolute';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.zIndex = '10';
   const svg = document.getElementById('arrow-svg');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
