@@ -87,6 +87,20 @@ textarea::placeholder{color:var(--text-muted);}
 .tm-move{font-size:17px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--text);}
 .tm-score{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:2px;}
 .tm-score.pos{color:#5ab87a;} .tm-score.neg{color:#e05a5a;}
+
+/* Engine lines */
+.eline{padding:10px 0;border-bottom:1px solid var(--border);}
+.eline:last-child{border-bottom:none;}
+.eline-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.eline-score{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;min-width:44px;}
+.eline-score.pos{color:#5ab87a;} .eline-score.neg{color:#e05a5a;}
+.eline-first{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
+.eline-moves{display:flex;flex-wrap:wrap;gap:3px;}
+.eline-mv{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 6px;cursor:pointer;transition:all .12s;}
+.eline-mv:hover{border-color:var(--accent);color:var(--accent);}
+.eline-mv.first{color:var(--text);font-weight:600;background:var(--surface2);}
+.eline-num{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
+
 .ac{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
 .ac-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 .ac-hdr span{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
@@ -258,12 +272,10 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
 <!-- RIGHT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
-  <div class="panel">
-    <div class="ph"><div class="dot"></div><h2>Лучшие ходы</h2></div>
-    <div class="pb">
-      <div class="top-moves" id="top-moves">
-        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0;">Загрузи партию</div>
-      </div>
+  <div class="panel" id="engine-panel" style="display:none;">
+    <div class="ph"><div class="dot"></div><h2>Анализ движка</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="engine-depth-lbl">depth 15</span></div>
+    <div class="pb" style="padding:10px 14px;">
+      <div id="engine-lines"></div>
     </div>
   </div>
 </div>
@@ -489,7 +501,7 @@ function goTo(idx) {
   updateMoveHL();
   updateNav();
   updateEvalForIdx(idx);
-  updateTopMoves(idx);
+  fetchEngineLines(chessGame.fen());
   updateChartMarker(idx);
 }
 
@@ -524,25 +536,74 @@ function updateEvalBar(score) {
   if (score>=0){top.textContent='';bot.textContent=d;}else{top.textContent=d;bot.textContent='';}
 }
 
-// ── Top moves ──
-function updateTopMoves(idx) {
-  const tm = topMovesData[idx];
-  const c = document.getElementById('top-moves');
-  if (!tm || !tm.length) { c.innerHTML='<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0;">Нет данных</div>'; return; }
-  c.innerHTML = '';
-  ['1. Лучший ход','2. Альтернатива'].forEach((lbl,i) => {
-    if (!tm[i]) return;
-    const sc = scores[idx] != null ? scores[idx] : null;
-    const item = document.createElement('div'); item.className='tm-item';
-    item.innerHTML = `<div class="tm-rank">${lbl}</div><div class="tm-move">${tm[i]}</div>`;
-    if (sc!==null) item.innerHTML += `<div class="tm-score ${sc>=0?'pos':'neg'}">${(sc>=0?'+':'')+(sc/100).toFixed(2)}</div>`;
-    item.onclick = () => flashMove(tm[i]);
-    c.appendChild(item);
+// ── Engine lines (replaces top moves) ──
+function renderEngineLines(lines) {
+  const panel = document.getElementById('engine-panel');
+  const container = document.getElementById('engine-lines');
+  if (!lines || !lines.length) { panel.style.display = 'none'; return; }
+
+  panel.style.display = 'block';
+  container.innerHTML = '';
+
+  lines.forEach((line, li) => {
+    const sc = line.score != null ? line.score : 0;
+    const scFmt = (sc >= 0 ? '+' : '') + (sc / 100).toFixed(2);
+    const scCls = sc >= 0 ? 'pos' : 'neg';
+
+    const div = document.createElement('div');
+    div.className = 'eline';
+
+    const game = mode === 'explore' ? exploreGame : chessGame;
+    const startTurn = game ? game.turn() : 'w';
+    let moveHtml = '';
+    line.moves.forEach((mv, i) => {
+      const isWhite = (startTurn === 'w') ? (i % 2 === 0) : (i % 2 === 1);
+      const isFirst = i === 0;
+      if (isWhite) {
+        moveHtml += `<span class="eline-num" style="margin-right:1px;">${Math.floor(i/2)+1+(startTurn==='b'&&i===0?0:0)}.</span>`;
+      }
+      moveHtml += `<span class="eline-mv${isFirst?' first':''}" data-line="${li}" data-idx="${i}">${mv}</span>`;
+    });
+
+    div.innerHTML = `
+      <div class="eline-top">
+        <span class="eline-score ${scCls}">${scFmt}</span>
+        <span class="eline-first">${line.moves[0] || ''}</span>
+      </div>
+      <div class="eline-moves">${moveHtml}</div>`;
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll('.eline-mv').forEach(el => {
+    el.addEventListener('click', () => flashMove(el.textContent.trim()));
   });
 }
 
+// Обновляем updateTopMoves — теперь просто заглушка (данные идут через engine lines)
+function updateTopMoves(idx) {
+  // В режиме просмотра линии обновляются через fetchEngineLines
+  fetchEngineLines(chessGame.fen());
+}
+
+async function fetchEngineLines(fen) {
+  try {
+    const res = await fetch('/analyze_position', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({fen})
+    });
+    const data = await res.json();
+    if (data.lines) renderEngineLines(data.lines);
+    if (data.score !== undefined) updateEvalBar(data.score);
+  } catch(e) {}
+}
+
+async function fetchPositionAnalysis(fen) {
+  // Explore mode — same endpoint
+  fetchEngineLines(fen);
+}
+
 function flashMove(san) {
-  const game = mode==='explore' ? exploreGame : chessGame;
+  const game = mode === 'explore' ? exploreGame : chessGame;
   if (!game) return;
   try {
     const mv = game.move(san);
