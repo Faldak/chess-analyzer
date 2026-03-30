@@ -570,8 +570,16 @@ function setMode(m) {
     exploreGame = new Chess(chessGame.fen());
     createBoard(chessGame.fen(), true);
     fetchPositionAnalysis(exploreGame.fen());
+    // Добавляем обработку кликов вручную для мобилки
+    setTimeout(() => {
+      $('#chessboard').find('.square-55d63').off('click').on('click', function() {
+        const sq = $(this).data('square');
+        if (sq) onSquareClick(sq);
+      });
+    }, 300);
   } else {
     exploreGame = null;
+    selectedSquare = null;
     createBoard(chessGame.fen(), false);
     setTimeout(highlightLastMove, 50);
   }
