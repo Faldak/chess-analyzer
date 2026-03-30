@@ -81,9 +81,13 @@ def annotate():
         annotations = [""] * len(moves_san)
         scores = [None] * (len(moves_san) + 1)
         top_moves = [None] * (len(moves_san) + 1)
+        white_accuracy = 0
+        black_accuracy = 0
 
         if sf_path:
             board2 = game.board()
+            white_moves_list = []
+            black_moves_list = []
             with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
                 # Evaluate initial position
                 info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
@@ -95,6 +99,13 @@ def annotate():
 
                 for i, mv in enumerate(move_objects):
                     sac = is_sacrifice(board2, mv, scores[i], None)
+                    
+                    # Analyze position BEFORE the move (get best move eval)
+                    info_before = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
+                    best_move_eval = None
+                    if isinstance(info_before, list) and len(info_before) > 0:
+                        best_move_eval = info_before[0]["score"].white().score(mate_score=10000)
+                    
                     board2.push(mv)
 
                     info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
@@ -106,9 +117,31 @@ def annotate():
                         top_moves[i+1] = []
 
                     if scores[i] is not None and scores[i+1] is not None:
-                        is_white = (i % 2 == 0)
-                        diff = scores[i+1] - scores[i] if is_white else scores[i] - scores[i+1]
+                        is_white_move = (i % 2 == 0)
+                        diff = scores[i+1] - scores[i] if is_white_move else scores[i] - scores[i+1]
                         annotations[i] = get_annotation(diff, sac)
+                        
+                        # Calculate accuracy based on position loss/gain
+                        # diff = how much the evaluation changed after the move
+                        # If diff >= 0, player maintained or improved position
+                        # If diff < 0, player worsened the position
+                        
+                        # Accuracy calculation:
+                        # 100% = diff >= 0 (good moves)
+                        # Lose 1% per 10 centipawns of negaive difference
+                        accuracy_score = 100.0
+                        if diff < 0:
+                            # Player made a losing move
+                            accuracy_score = max(0, 100.0 + (diff / 10.0))
+                        
+                        if is_white_move:
+                            white_moves_list.append(accuracy_score)
+                        else:
+                            black_moves_list.append(accuracy_score)
+            
+            # Calculate average accuracy percentages
+            white_accuracy = round(sum(white_moves_list) / len(white_moves_list), 1) if white_moves_list else 0
+            black_accuracy = round(sum(black_moves_list) / len(black_moves_list), 1) if black_moves_list else 0
 
         return jsonify({
             "moves": moves_san,
@@ -117,7 +150,9 @@ def annotate():
             "result": result,
             "annotations": annotations,
             "scores": scores,
-            "top_moves": top_moves
+            "top_moves": top_moves,
+            "white_accuracy": white_accuracy,
+            "black_accuracy": black_accuracy
         })
 
     except Exception as e:
@@ -388,7 +423,7 @@ def analyze_move():
 
 @app.route("/analyze_position", methods=["POST"])
 def analyze_position():
-    """Get top 2 engine lines (5 moves deep) for a given FEN position."""
+    """Get top 2 moves for a given FEN position."""
     data = request.get_json()
     fen = data.get("fen", "")
     try:
@@ -396,38 +431,17 @@ def analyze_position():
         sf_path = get_sf()
         if not sf_path:
             return jsonify({"error": "Stockfish не найден"}), 500
-
         with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
-            info = engine.analyse(
-                board,
-                chess.engine.Limit(time=0.6),
-                multipv=2
-            )
-            lines = []
+            info = engine.analyse(board, chess.engine.Limit(time=0.5), multipv=2)
+            result = []
             for entry in (info if isinstance(info, list) else [info]):
-                if "pv" not in entry or not entry["pv"]:
-                    continue
-                score = entry["score"].white().score(mate_score=10000)
-
-                tmp = board.copy()
-                san_moves = []
-                for mv in entry["pv"][:5]:
-                    try:
-                        san_moves.append(tmp.san(mv))
-                        tmp.push(mv)
-                    except Exception:
-                        break
-
-                lines.append({
-                    "score": score,
-                    "moves": san_moves,
-                    "move": san_moves[0] if san_moves else "",
-                })
-
-            return jsonify({
-                "lines": lines,
-                "score": lines[0]["score"] if lines else 0
-            })
+                if "pv" in entry and entry["pv"]:
+                    score = entry["score"].white().score(mate_score=10000)
+                    result.append({
+                        "move": board.san(entry["pv"][0]),
+                        "score": score
+                    })
+            return jsonify({"top_moves": result, "score": result[0]["score"] if result else 0})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -496,14 +510,19 @@ def trainer_move():
         if player_move:
             player_block = f"\nИгрок только что сделал ход: {player_move}"
 
-        prompt = f"""Ты шахматный тренер, играешь против ученика.
-Ход: {trainer_san}
-{'Ученик сыграл: ' + player_move if player_move else 'Начало партии.'}
+        prompt = f"""Ты шахматный тренер, играешь против ученика ({level_name} уровень).
+Ход номер {move_number} в партии.
+FEN до твоего хода: {fen}
+{player_block}
+Твой ход: {trainer_san}
+Оценка позиции до: {score_before/100 if score_before else 0:.2f}
 Оценка после твоего хода: {score_after/100 if score_after else 0:.2f}
 
-Напиши ОДНО короткое предложение от первого лица, как живой соперник за доской.
-Упомяни название своего хода ({trainer_san}).
-Не используй markdown. Максимум 15 слов."""
+Напиши короткий живой комментарий (2-3 предложения) КАК НАСТОЯЩИЙ ТРЕНЕР во время игры.
+Говори от первого лица ("Я делаю...", "Интересный ход...", "Хм...").
+{'Прокомментируй ход ученика и объясни свой ответный ход.' if player_move else 'Объясни свой первый ход и намерения.'}
+Будь живым, используй шахматные термины, иногда хвали или критикуй.
+Не используй markdown, только обычный текст."""
 
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
