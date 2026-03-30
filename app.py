@@ -235,6 +235,7 @@ def analyze_move():
     move_index = data.get("move_index", None)
     custom_fen = data.get("fen", None)
     custom_move = data.get("move", None)
+    language = data.get("language", "ru")  # языковой параметр
 
     try:
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -479,8 +480,16 @@ def analyze_move():
         sa_s = f"{summary_sa/100:+.2f}" if summary_sa is not None else "?"
         summary = f"{sb_s} → {sa_s}  ·  {quality}"
 
+        # добавляем языковую инструкцию в конец промпта
+        lang_instruction = ""
+        if language == "en":
+            lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
+        elif language == "kk":
+            lang_instruction = "\n\nОЛІ: Жауапты ТЕК қазақша беріңіз."
+        # иначе Russian по умолчанию
+        
         chat = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": prompt + lang_instruction}],
             model="llama-3.3-70b-versatile",
         )
         return jsonify({
@@ -528,6 +537,7 @@ def trainer_move():
     level = data.get("level", "medium")          # novice / medium / master
     move_number = data.get("move_number", 1)
     game_pgn = data.get("pgn", "")              # вся партия до этого момента
+    language = data.get("language", "ru")        # языковой параметр
 
     # Skill levels для Stockfish
     skill_map = {"novice": 3, "medium": 10, "master": 18}
@@ -594,8 +604,15 @@ FEN до твоего хода: {fen}
 Будь живым, используй шахматные термины, иногда хвали или критикуй.
 Не используй markdown, только обычный текст."""
 
+        # добавляем языковую инструкцию в конец промпта
+        lang_instruction = ""
+        if language == "en":
+            lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
+        elif language == "kk":
+            lang_instruction = "\n\nОЛІ: Жауапты ТЕК қазақша беріңіз."
+        
         chat = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": prompt + lang_instruction}],
             model="llama-3.3-70b-versatile",
             max_tokens=200,
         )
