@@ -25,6 +25,7 @@ header{padding:22px 0 18px;border-bottom:1px solid var(--border);margin-bottom:2
 .grid{display:grid;grid-template-columns:300px 1fr 300px;gap:18px;align-items:start;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .ph{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.scroll-btns{margin-left:auto;display:flex;gap:4px;}
 .ph .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
 .ph h2{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
 .pb{padding:16px;}
@@ -261,7 +262,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <!-- RIGHT -->
 <div style="display:flex;flex-direction:column;gap:14px;">
   <div class="panel moves-wrap" id="moves-panel">
-    <div class="ph"><div class="dot"></div><h2>Ходы</h2></div>
+    <div class="ph"><div class="dot"></div><h2>Ходы</h2><div class="scroll-btns"><button class="nb" onclick="scrollMovesUp()">↑</button><button class="nb" onclick="scrollMovesDown()">↓</button></div></div>
     <div class="pb" style="padding:10px;">
       <div class="players-bar" id="players-bar">
         <div class="player"><div class="pc white"></div><div class="pn" id="wname">Белые</div></div>
@@ -824,6 +825,17 @@ function updateChartMarker(idx){
   evalChart.data.datasets[0].pointRadius=evalChart.data.labels.map((_,i)=>i===idx?5:0);
   evalChart.data.datasets[0].pointBackgroundColor=evalChart.data.labels.map((_,i)=>i===idx?'#e8c97a':'#c9a84c');
   evalChart.update('none');
+}
+
+// ── Scroll moves ──
+function scrollMovesUp() {
+  const grid = document.getElementById('moves-grid');
+  grid.scrollTop -= 50;
+}
+
+function scrollMovesDown() {
+  const grid = document.getElementById('moves-grid');
+  grid.scrollTop += 50;
 }
 
 // ── Keyboard ──
