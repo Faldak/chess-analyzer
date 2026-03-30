@@ -577,11 +577,11 @@ async function loadGame() {
   const pgn = document.getElementById('pgn-input').value.trim();
   const errEl = document.getElementById('err');
   errEl.style.display = 'none';
-  if (!pgn) { errEl.textContent = 'Вставь PGN'; errEl.style.display = 'block'; return; }
+  if (!pgn) { errEl.textContent = translations[currentLanguage]?.error_empty_pgn || 'Вставь PGN'; errEl.style.display = 'block'; return; }
 
   const btn = document.getElementById('load-btn');
   btn.disabled = true;
-  document.getElementById('btn-txt').textContent = '⏳ Анализируем...';
+  document.getElementById('btn-txt').textContent = translations[currentLanguage]?.loading || '⏳ Анализируем...';
   showACLoading();
 
   try {
@@ -636,12 +636,12 @@ async function loadGame() {
     fetchMoveExplanation(pgn, null, null, null);
 
   } catch(e) {
-    errEl.textContent = 'Ошибка: ' + e.message;
+    errEl.textContent = (translations[currentLanguage]?.error_invalid_pgn || 'Ошибка') + ': ' + (e.message || e);
     errEl.style.display = 'block';
     hideACLoading();
   } finally {
     btn.disabled = false;
-    document.getElementById('btn-txt').textContent = '♟ Загрузить и анализировать';
+    document.getElementById('btn-txt').textContent = translations[currentLanguage]?.analyze_button || '♟ Загрузить и анализировать';
   }
 }
 
