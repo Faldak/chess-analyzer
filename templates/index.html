@@ -573,7 +573,7 @@ function setMode(m) {
     // Добавляем обработку кликов вручную для мобилки
     setTimeout(() => {
       $('#chessboard').find('.square-55d63').off('click').on('click', function() {
-        const sq = $(this).data('square');
+        const sq = $(this).attr('data-square');
         if (sq) onSquareClick(sq);
       });
     }, 300);
