@@ -389,13 +389,20 @@ function initBoard() {
   board = Chessboard('chessboard', {
     position: 'start',
     orientation: playerColor === 'black' ? 'black' : 'white',
-   pieceTheme: 'https://lichess1.org/assets/piece/cburnett/{piece}.svg',
+    pieceTheme: 'https://lichess1.org/assets/piece/cburnett/{piece}.svg',
     draggable: true,
     onDragStart: onDragStart,
     onDrop: onDrop,
-    onSnapEnd: onSnapEnd
-    
+    onSnapEnd: onSnapEnd,
+    onSquareClick: onSquareClick
   });
+  // Добавляем обработку кликов для мобилки
+  setTimeout(() => {
+    $('#chessboard').find('.square-55d63').off('click').on('click', function() {
+      const sq = $(this).attr('data-square');
+      if (sq) onSquareClick(sq);
+    });
+  }, 300);
 }
 
 function onDragStart(source, piece) {
