@@ -83,11 +83,13 @@ def annotate():
         top_moves = [None] * (len(moves_san) + 1)
         white_accuracy = 0
         black_accuracy = 0
+        white_avg_loss = 0
+        black_avg_loss = 0
 
         if sf_path:
             board2 = game.board()
-            white_moves_list = []
-            black_moves_list = []
+            white_diffs = []
+            black_diffs = []
             with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
                 # Evaluate initial position
                 info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
@@ -99,13 +101,6 @@ def annotate():
 
                 for i, mv in enumerate(move_objects):
                     sac = is_sacrifice(board2, mv, scores[i], None)
-                    
-                    # Analyze position BEFORE the move (get best move eval)
-                    info_before = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
-                    best_move_eval = None
-                    if isinstance(info_before, list) and len(info_before) > 0:
-                        best_move_eval = info_before[0]["score"].white().score(mate_score=10000)
-                    
                     board2.push(mv)
 
                     info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
@@ -118,30 +113,38 @@ def annotate():
 
                     if scores[i] is not None and scores[i+1] is not None:
                         is_white_move = (i % 2 == 0)
+                        # Positive diff = good move (improvement), negative = mistake
                         diff = scores[i+1] - scores[i] if is_white_move else scores[i] - scores[i+1]
                         annotations[i] = get_annotation(diff, sac)
                         
-                        # Calculate accuracy based on position loss/gain
-                        # diff = how much the evaluation changed after the move
-                        # If diff >= 0, player maintained or improved position
-                        # If diff < 0, player worsened the position
-                        
-                        # Accuracy calculation:
-                        # 100% = diff >= 0 (good moves)
-                        # Lose 1% per 10 centipawns of negaive difference
-                        accuracy_score = 100.0
-                        if diff < 0:
-                            # Player made a losing move
-                            accuracy_score = max(0, 100.0 + (diff / 10.0))
-                        
+                        # Collect diffs for accuracy calculation
                         if is_white_move:
-                            white_moves_list.append(accuracy_score)
+                            white_diffs.append(diff)
                         else:
-                            black_moves_list.append(accuracy_score)
+                            black_diffs.append(diff)
             
-            # Calculate average accuracy percentages
-            white_accuracy = round(sum(white_moves_list) / len(white_moves_list), 1) if white_moves_list else 0
-            black_accuracy = round(sum(black_moves_list) / len(black_moves_list), 1) if black_moves_list else 0
+            # Calculate average loss (negative diffs) and accuracy
+            def calculate_accuracy(diffs):
+                if not diffs:
+                    return 0, 0
+                
+                # Average centipawn loss/gain across all moves
+                avg_loss = sum(diffs) / len(diffs) if diffs else 0
+                
+                # Accuracy formula: 100% - (avg_loss / 10)
+                # If avg_loss is negative (losses), it reduces accuracy
+                # If avg_loss is positive (gains), it increases accuracy
+                accuracy = max(0, 100.0 - (avg_loss / 10.0))
+                
+                return accuracy, avg_loss
+            
+            white_accuracy, white_avg_loss = calculate_accuracy(white_diffs)
+            black_accuracy, black_avg_loss = calculate_accuracy(black_diffs)
+            
+            white_accuracy = round(white_accuracy, 1)
+            black_accuracy = round(black_accuracy, 1)
+            white_avg_loss = round(white_avg_loss, 0)
+            black_avg_loss = round(black_avg_loss, 0)
 
         return jsonify({
             "moves": moves_san,
@@ -152,7 +155,9 @@ def annotate():
             "scores": scores,
             "top_moves": top_moves,
             "white_accuracy": white_accuracy,
-            "black_accuracy": black_accuracy
+            "black_accuracy": black_accuracy,
+            "white_avg_loss": white_avg_loss,
+            "black_avg_loss": black_avg_loss
         })
 
     except Exception as e:

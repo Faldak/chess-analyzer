@@ -47,7 +47,10 @@ textarea::placeholder{color:var(--text-muted);}
 .acc-color{width:12px;height:12px;border-radius:3px;border:1px solid var(--border);}
 .acc-color.white{background:#f0ede8;} .acc-color.black{background:#1a1a1a;}
 .acc-name{font-size:12px;font-weight:500;}
-.acc-val{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+.acc-stats{display:flex;gap:16px;align-items:center;}
+.acc-val{display:flex;flex-direction:column;align-items:flex-end;}
+.acc-accuracy{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+.acc-loss{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 .pc{width:12px;height:12px;border-radius:3px;border:1px solid var(--border);}
 .pc.white{background:#f0ede8;} .pc.black{background:#1a1a1a;}
 .pn{font-size:12px;font-weight:500;}
@@ -281,11 +284,21 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
       <div class="accuracy-bar" id="accuracy-bar">
         <div class="acc-row">
           <div class="acc-player"><div class="acc-color white"></div><div class="acc-name" id="acc-wname">Белые</div></div>
-          <div class="acc-val" id="acc-white">—</div>
+          <div class="acc-stats">
+            <div class="acc-val">
+              <div class="acc-accuracy" id="acc-white">—</div>
+              <div class="acc-loss" id="acc-white-loss">—</div>
+            </div>
+          </div>
         </div>
         <div class="acc-row">
           <div class="acc-player"><div class="acc-color black"></div><div class="acc-name" id="acc-bname">Чёрные</div></div>
-          <div class="acc-val" id="acc-black">—</div>
+          <div class="acc-stats">
+            <div class="acc-val">
+              <div class="acc-accuracy" id="acc-black">—</div>
+              <div class="acc-loss" id="acc-black-loss">—</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="moves-grid" id="moves-grid"></div>
@@ -321,6 +334,8 @@ let justDrewArrow = false;
 let pgnStore    = '';
 let whiteAccuracy = 0;
 let blackAccuracy = 0;
+let whiteAvgLoss = 0;
+let blackAvgLoss = 0;
 
 const PIECE_THEME = 'https://lichess1.org/assets/piece/cburnett/{piece}.svg';
 
@@ -512,6 +527,8 @@ async function loadGame() {
     topMovesData = data.top_moves || [];
     whiteAccuracy = data.white_accuracy || 0;
     blackAccuracy = data.black_accuracy || 0;
+    whiteAvgLoss = data.white_avg_loss || 0;
+    blackAvgLoss = data.black_avg_loss || 0;
     gameLoaded   = true;
     pgnStore     = pgn;
 
@@ -533,7 +550,9 @@ async function loadGame() {
     document.getElementById('acc-wname').textContent     = data.white;
     document.getElementById('acc-bname').textContent     = data.black;
     document.getElementById('acc-white').textContent     = whiteAccuracy + '%';
+    document.getElementById('acc-white-loss').textContent = (whiteAvgLoss >= 0 ? '↑ +' : '↓ ') + Math.abs(whiteAvgLoss) + ' сп';
     document.getElementById('acc-black').textContent     = blackAccuracy + '%';
+    document.getElementById('acc-black-loss').textContent = (blackAvgLoss >= 0 ? '↑ +' : '↓ ') + Math.abs(blackAvgLoss) + ' сп';
     document.getElementById('accuracy-bar').style.display = 'block';
 
     buildMovesGrid();
