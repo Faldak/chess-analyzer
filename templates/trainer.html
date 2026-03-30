@@ -105,6 +105,7 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .square-55d63{transition:background .1s;}
 .highlight-from{background:rgba(201,168,76,.55) !important;}
 .highlight-to{background:rgba(201,168,76,.65) !important;}
+.selected-sq{background:rgba(201,168,76,.3) !important;}
 
 .ctrl-row{display:flex;gap:8px;width:400px;}
 .ctrl-btn{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;font-family:'Inter',sans-serif;}
@@ -328,6 +329,7 @@ let gameMoves = [];
 let lastFrom = null, lastTo = null;
 let currentScore = 0;
 let gameResult = '*';
+let selectedSquare = null;
 
 const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
 
@@ -403,6 +405,39 @@ function initBoard() {
   });
 }
 
+function onSquareClick(square) {
+  if (!gameActive || gameChess.game_over()) return;
+  const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
+  if (!myTurn) return;
+
+  if (selectedSquare) {
+    const move = gameChess.move({ from: selectedSquare, to: square, promotion: 'q' });
+    if (move) {
+      $('.square-55d63').removeClass('selected-sq');
+      selectedSquare = null;
+      lastFrom = move.from; lastTo = move.to;
+      gameMoves.push(move.san);
+      $('.square-55d63').removeClass('highlight-from highlight-to');
+      $('[data-square="' + move.from + '"]').addClass('highlight-from');
+      $('[data-square="' + move.to + '"]').addClass('highlight-to');
+      updateStats();
+      addMoveToList(move.san);
+      board.position(gameChess.fen());
+      if (gameChess.game_over()) { setTimeout(() => endGame(), 300); return; }
+      setTimeout(() => trainerMakeMove(move.san), 600);
+      return;
+    }
+    $('.square-55d63').removeClass('selected-sq');
+    selectedSquare = null;
+  }
+
+  const piece = gameChess.get(square);
+  if (piece && ((playerColor === 'white' && piece.color === 'w') || (playerColor === 'black' && piece.color === 'b'))) {
+    selectedSquare = square;
+    $('[data-square="' + square + '"]').addClass('selected-sq');
+  }
+}
+
 function onDragStart(source, piece) {
   if (!gameActive) return false;
   if (gameChess.game_over()) return false;
@@ -418,6 +453,9 @@ function onDrop(source, target) {
 
   const move = gameChess.move({ from: source, to: target, promotion: 'q' });
   if (!move) return 'snapback';
+
+  selectedSquare = null;
+  $('.square-55d63').removeClass('selected-sq');
 
   lastFrom = source; lastTo = target;
   gameMoves.push(move.san);
@@ -440,6 +478,10 @@ function onSnapEnd() {
 // ── Trainer move ──
 async function trainerMakeMove(playerMoveSan) {
   if (!gameActive) return;
+
+  selectedSquare = null;
+  $('.square-55d63').removeClass('selected-sq');
+
   setTrainerThinking(true);
 
   try {
@@ -638,6 +680,7 @@ function newGame() {
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'flex';
   gameActive = false;
+  selectedSquare = null;
   document.getElementById('moves-list').innerHTML = '';
   if (board) { board.destroy(); board = null; }
 }
