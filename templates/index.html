@@ -586,8 +586,13 @@ function buildMovesGrid() {
       const cell = document.createElement('div');
       if (idx >= allMoves.length) { cell.className='mc empty'; grid.appendChild(cell); return; }
       cell.className = 'mc'; cell.dataset.idx = idx; cell.textContent = allMoves[idx];
-      const ann = annotations[idx] || '';
-      if (ann) { const sp = document.createElement('span'); sp.className='ann '+getAnnClass(ann); sp.textContent=ann; cell.appendChild(sp); }
+      // Добавляем значок только если есть оценка хода
+      if (annotations[idx]) {
+        const sp = document.createElement('span');
+        sp.className = 'ann ' + getAnnClass(annotations[idx]);
+        sp.textContent = annotations[idx];
+        cell.appendChild(sp);
+      }
       cell.onclick = () => goTo(idx + 1);
       grid.appendChild(cell);
     });
