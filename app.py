@@ -135,7 +135,7 @@ def annotate():
             
             with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
                 # Evaluate initial position
-                info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
+                info = engine.analyse(board2, chess.engine.Limit(time=0.05), multipv=2)
                 if isinstance(info, list):
                     scores[0] = info[0]["score"].white().score(mate_score=10000)
                     top_moves[0] = []
@@ -151,7 +151,7 @@ def annotate():
 
                 for i, mv in enumerate(move_objects):
                     # Get best move BEFORE this move
-                    info_before = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
+                    info_before = engine.analyse(board2, chess.engine.Limit(time=0.05), multipv=2)
                     best_move = None
                     if info_before:
                         if isinstance(info_before, list):
@@ -176,7 +176,7 @@ def annotate():
                     sac = is_sacrifice(board2, mv, scores[i], None)
                     board2.push(mv)
 
-                    info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
+                    info = engine.analyse(board2, chess.engine.Limit(time=0.05), multipv=2)
                     if isinstance(info, list):
                         scores[i+1] = info[0]["score"].white().score(mate_score=10000)
                         top_moves[i+1] = []
@@ -259,7 +259,7 @@ def analyze_move():
 
         def get_sf_data(board, move_obj=None, engine=None):
             """Получает данные Stockfish для позиции и хода."""
-            info_before = engine.analyse(board, chess.engine.Limit(time=0.5), multipv=3)
+            info_before = engine.analyse(board, chess.engine.Limit(time=0.3), multipv=3)
             score_before = info_before[0]["score"].white().score(mate_score=10000)
 
             top_moves = []
@@ -274,7 +274,7 @@ def analyze_move():
             if move_obj:
                 board_after = board.copy()
                 board_after.push(move_obj)
-                info_after = engine.analyse(board_after, chess.engine.Limit(time=0.5))
+                info_after = engine.analyse(board_after, chess.engine.Limit(time=0.3))
                 score_after = (info_after if not isinstance(info_after, list) else info_after[0])["score"].white().score(mate_score=10000)
 
             return score_before, score_after, top_moves

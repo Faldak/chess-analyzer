@@ -28,6 +28,9 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .lt p{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 .back-btn{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:6px;}
 .back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lang-btn{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--text-muted);font-size:10px;padding:4px 8px;border-radius:5px;cursor:pointer;transition:all .15s;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.lang-btn:hover{border-color:rgba(201,168,76,.6);color:var(--accent2);}
+.lang-btn.active{background:rgba(201,168,76,.25);border-color:var(--accent);color:var(--accent);}
 
 #setup-screen{display:flex;flex-direction:column;align-items:center;gap:24px;padding:40px 0;}
 .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:480px;}
@@ -194,6 +197,11 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
   <div class="hi">
     <div class="logo">🎓</div>
     <div class="lt"><h1 data-i18n="title">Chess Trainer</h1><p data-i18n="subtitle">Игра с ИИ тренером + Stockfish</p></div>
+    <div style="display:flex;gap:4px;margin-left:auto;margin-right:10px;">
+      <button class="lang-btn active" data-lang="ru">РУ</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="kk">KK</button>
+    </div>
     <a href="/" class="back-btn" data-i18n="analysis_mode">← Анализатор</a>
   </div>
 </header>
@@ -853,6 +861,56 @@ function clearArrows() {
   const arrs = svg.querySelectorAll('.arrow');
   arrs.forEach(a => a.remove());
 }
+
+// ── Localization ──
+let currentLanguage = localStorage.getItem('chess-analyzer-lang') || 'ru';
+let translations = {};
+
+async function loadTranslations() {
+  try {
+    const res = await fetch('/templates/translations.json');
+    translations = await res.json();
+    updateLanguage(currentLanguage);
+  } catch(e) {
+    console.error('Failed to load translations:', e);
+  }
+}
+
+function updateLanguage(lang) {
+  if (!translations[lang]) lang = 'ru';
+  currentLanguage = lang;
+  localStorage.setItem('chess-analyzer-lang', lang);
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[lang] && translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+  
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (translations[lang] && translations[lang][key]) {
+      el.placeholder = translations[lang][key];
+    }
+  });
+  
+  // Update language buttons visual state
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadTranslations();
+  
+  // Language switch buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateLanguage(btn.dataset.lang);
+    });
+  });
+});
 </script>
 </body>
 </html>
