@@ -793,7 +793,8 @@ function setMode(m) {
     setTimeout(() => {
       $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
         // Игнорируем правый клик (для рисования стрелок)
-        if (e.button === 2) return;
+        if (lastMouseButton === 2) return;
+        if (justDrewArrow) return; // Также не делаем ход если только что рисовали стрелку
         const sq = $(this).attr('data-square');
         if (sq) {
           onSquareClick(sq, e);
