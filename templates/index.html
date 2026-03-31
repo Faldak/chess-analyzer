@@ -785,6 +785,8 @@ function setMode(m) {
     // Добавляем обработку кликов вручную для мобилки
     setTimeout(() => {
       $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
+        // Игнорируем правый клик (для рисования стрелок)
+        if (e.button === 2) return;
         const sq = $(this).attr('data-square');
         if (sq) {
           onSquareClick(sq, e);
