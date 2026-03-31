@@ -826,7 +826,7 @@ async function analyzeCurrentMove() {
 async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
   showACLoading();
   try {
-    const body={language: currentLanguage};
+    const body={};
     if(pgn) body.pgn=pgn;
     if(moveIndex!==null&&moveIndex!==undefined) body.move_index=moveIndex;
     if(fen) body.fen=fen;
