@@ -340,6 +340,7 @@ let evalVisible = true;
 let arrows = [];
 let drawingArrow = null;
 let justDrewArrow = false;
+let lastMouseButton = 0; // Отслеживаем последнюю кнопку мыши
 
 const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
 
@@ -441,6 +442,11 @@ $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
+    lastMouseButton = e.button; // Сохраняем кнопку мыши
+    if (e.button === 0 && justDrewArrow) {
+      clearArrows();
+      justDrewArrow = false;
+    }
     if (e.button === 2) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
       if (square) {
@@ -477,7 +483,8 @@ function onSquareClick(square, event) {
     return;
   }
   
-  if (event && event.button === 2) return; // Ignore right click
+  // Игнорируем правый клик
+  if (lastMouseButton === 2) return;
   if (!gameActive || gameChess.game_over()) return;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
   if (!myTurn) return;
