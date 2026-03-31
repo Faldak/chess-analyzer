@@ -13,9 +13,11 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging - set to INFO to avoid rate limiting
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+# Disable verbose chess engine logging
+logging.getLogger('chess.engine').setLevel(logging.WARNING)
 
 def get_sf():
     sf = shutil.which("stockfish")
