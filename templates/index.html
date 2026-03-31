@@ -382,6 +382,13 @@ function createBoard(fen, draggable) {
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   $('#chessboard').on('contextmenu', e => e.preventDefault());
+  // Левый клик очищает стрелки
+  $('#chessboard').on('click', e => {
+    if (e.button === 0 && justDrewArrow) {
+      clearArrows();
+      justDrewArrow = false;
+    }
+  });
   $('#chessboard').on('mousedown', e => {
     if (e.button === 2) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
@@ -1078,6 +1085,13 @@ $(document).ready(()=>{
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   $('#chessboard').on('contextmenu', e => e.preventDefault());
+  // Левый клик очищает стрелки
+  $('#chessboard').on('click', e => {
+    if (e.button === 0 && justDrewArrow) {
+      clearArrows();
+      justDrewArrow = false;
+    }
+  });
   $('#chessboard').on('mousedown', e => {
     if (e.button === 2) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
