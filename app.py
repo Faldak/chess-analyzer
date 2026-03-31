@@ -122,16 +122,17 @@ def annotate():
         sf_path = get_sf()
         annotations = [""] * len(moves_san)
         scores = [None] * (len(moves_san) + 1)
-        top_moves = [None] * (len(moves_san) + 1)
+        top_moves = [[] for _ in range(len(moves_san) + 1)]  # Initialize as lists, not None
         white_accuracy = 0
         black_accuracy = 0
 
         if sf_path:
-            board2 = game.board()
-            white_accuracies = []
-            black_accuracies = []
-            
-            with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
+            try:
+                board2 = game.board()
+                white_accuracies = []
+                black_accuracies = []
+                
+                with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
                 # Evaluate initial position
                 info = engine.analyse(board2, chess.engine.Limit(time=0.15), multipv=2)
                 if isinstance(info, list):
@@ -218,6 +219,9 @@ def annotate():
             # Вычисляем среднюю точность для каждого игрока
             white_accuracy = round(sum(white_accuracies) / len(white_accuracies), 1) if white_accuracies else 0
             black_accuracy = round(sum(black_accuracies) / len(black_accuracies), 1) if black_accuracies else 0
+            except Exception as sf_err:
+                logger.warning(f\"Stockfish analysis failed: {str(sf_err)}\")
+                # Continue without Stockfish analysis
 
         return jsonify({
             "moves": moves_san,
