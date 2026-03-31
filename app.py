@@ -5,11 +5,17 @@ import chess.engine
 import io
 import os
 import shutil
+import logging
+import traceback
 from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_sf():
     sf = shutil.which("stockfish")
@@ -226,7 +232,14 @@ def annotate():
         })
 
     except Exception as e:
+        logger.error(f"Error in /annotate: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
+
+# Serve favicon
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204  # Return 204 No Content for favicon
 
 @app.route("/analyze_move", methods=["POST"])
 def analyze_move():
