@@ -340,7 +340,8 @@ let evalVisible = true;
 let arrows = [];
 let drawingArrow = null;
 let justDrewArrow = false;
-let lastMouseButton = 0; // Отслеживаем последнюю кнопку мыши
+let lastMouseButton = 0;
+let currentLanguage = 'ru'; // Отслеживаем последнюю кнопку мыши
 
 const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
 
@@ -555,6 +556,9 @@ function onDrop(source, target) {
 
   if (gameChess.game_over()) { setTimeout(() => endGame(), 300); return; }
   setTimeout(() => trainerMakeMove(move.san), 600);
+}
+function onSnapEnd() {
+  if (board) board.position(gameChess.fen());
 }
 // ── Trainer move ──
 async function trainerMakeMove(playerMoveSan) {
