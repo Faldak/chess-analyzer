@@ -74,7 +74,6 @@ textarea::placeholder{color:var(--text-muted);}
 .eval-fill{position:absolute;bottom:0;left:0;right:0;background:#f0ede8;transition:height .4s ease;border-radius:0 0 5px 5px;}
 .eval-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);}
 
-/* chessboard.js overrides */
 #chessboard{width:400px;}
 .board-b72b1{border-radius:8px !important;border:2px solid var(--border) !important;box-shadow:0 4px 24px rgba(0,0,0,.4);}
 .white-1e1d7{background:var(--ws) !important;}
@@ -101,7 +100,6 @@ textarea::placeholder{color:var(--text-muted);}
 .tm-score{font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:2px;}
 .tm-score.pos{color:#5ab87a;} .tm-score.neg{color:#e05a5a;}
 
-/* Engine lines */
 .eline{padding:10px 0;border-bottom:1px solid var(--border);}
 .eline:last-child{border-bottom:none;}
 .eline-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
@@ -144,29 +142,104 @@ textarea::placeholder{color:var(--text-muted);}
 .eval-chart-wrap canvas{cursor:pointer;}
 footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:28px;}
 @media(max-width:900px){.grid{grid-template-columns:1fr;}.badge{display:none;}#chessboard{width:320px !important;}}
+
+/* ── MOBILE ── */
 @media(max-width:768px){
-  .container{padding:0 12px;}
-  header{padding:14px 0 12px;margin-bottom:16px;}
-  .lt h1{font-size:17px;}
+  .container{padding:0 10px;}
+  header{padding:10px 0 10px;margin-bottom:12px;}
+  .lt h1{font-size:16px;}
   .lt p{display:none;}
   .badge{display:none;}
-  .grid{display:flex;flex-direction:column;gap:12px;}
-  .board-area{width:100%;}
+  .logo{width:32px;height:32px;font-size:16px;}
+
+  /* Основная сетка — одна колонка */
+  .grid{display:flex;flex-direction:column;gap:10px;}
+
+  /* Доска — сверху, не sticky */
+  .board-area{width:100%;align-items:center;}
   .mode-row{width:100% !important;}
-  #chessboard{width:calc(100vw - 56px) !important;}
-  .eval-bar-wrap{height:calc(100vw - 56px) !important;}
-  .nav-row{flex-wrap:wrap;justify-content:center;gap:4px;}
-  .nb{padding:6px 10px;font-size:12px;}
-  .mc-counter{font-size:10px;padding:6px 8px;}
-  .moves-grid{max-height:180px;}
-  .ac-text{font-size:12px;line-height:1.7;padding:10px;}
-  .ac-scores{gap:4px;padding:8px 10px;}
-  .sc-val{font-size:13px;}
-  .tm-move{font-size:14px;}
-  .eval-chart-wrap{padding:8px 10px 12px;}
-  .pb{padding:12px;}
-  footer{font-size:10px;padding:16px 0 12px;}
+
+  /* Размер доски по ширине экрана */
+  #chessboard{width:calc(100vw - 48px) !important;}
+  .eval-bar-wrap{height:calc(100vw - 48px) !important;}
+
+  /* Навигация компактнее */
+  .nav-row{flex-wrap:nowrap;justify-content:center;gap:4px;}
+  .nb{padding:5px 9px;font-size:11px;border-radius:6px;}
+  .mc-counter{font-size:10px;padding:5px 7px;}
+
+  /* График оценки чуть меньше */
+  .eval-chart-wrap{padding:6px 8px 10px;}
+
+  /* ─── Двухколоночная зона под доской ─── */
+  #mobile-bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    width:100%;
+  }
+
+  /* Блок «Ходы» — левая колонка, без своей прокрутки */
+  #moves-panel{
+    grid-column:1;
+    overflow:visible !important;
+  }
+  #moves-panel .ph{padding:9px 10px;}
+  #moves-panel .ph h2{font-size:10px;}
+  #moves-panel .scroll-btns{display:none;}/* скрываем кнопки прокрутки */
+  #moves-panel .pb{padding:8px;}
+
+  /* Сетка ходов — без ограничения высоты, без внутренней прокрутки */
+  .moves-grid{
+    max-height:none !important;
+    overflow:visible !important;
+    overflow-y:visible !important;
+  }
+  .mn{font-size:9px;padding:4px 5px;}
+  .mc{font-size:10px;padding:4px 6px;}
+  .ann{font-size:9px;}
+
+  /* players-bar и accuracy-bar внутри moves-panel — компакт */
+  .players-bar{padding:7px 10px;margin-bottom:8px;font-size:11px;}
+  .pn{font-size:10px;}
+  .rb{font-size:9px;padding:2px 6px;}
+  .accuracy-bar{padding:8px 10px;margin-bottom:8px;}
+  .acc-name{font-size:10px;}
+  .acc-accuracy{font-size:13px;}
+  .acc-loss{font-size:9px;}
+
+  /* Блок «Анализ движка» — правая колонка */
+  #engine-panel{
+    grid-column:2;
+  }
+  #engine-panel .ph{padding:9px 10px;}
+  #engine-panel .ph h2{font-size:10px;}
+  #engine-panel .pb{padding:8px 10px;}
+  .eline{padding:7px 0;}
+  .eline-score{font-size:11px;min-width:36px;}
+  .eline-first{font-size:12px;}
+  .eline-mv{font-size:10px;padding:2px 4px;}
+
+  /* Левая колонка (PGN + AI анализ) */
+  .ac-text{font-size:11px;line-height:1.6;padding:8px 10px;}
+  .ac-scores{gap:4px;padding:6px 8px;}
+  .sc-val{font-size:12px;}
+  .sc-lbl{font-size:8px;}
+  .pb{padding:10px;}
+
+  /* Кнопки */
+  .btn{font-size:12px;padding:9px;}
+  .btn-outline{font-size:11px;padding:7px;}
+
+  /* «Подробнее» кнопка */
+  .ac-more-btn{margin:6px 10px 8px;padding:5px 10px;font-size:10px;}
+
+  /* График под доской — полная ширина */
+  #eval-chart-panel{grid-column:1 / -1;}
+
+  footer{font-size:10px;padding:14px 0 10px;}
 }
+
 .ac-more-btn{
   display:block;
   margin:8px 14px 12px;
@@ -184,11 +257,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 .ac-short{padding:0;font-size:13px;line-height:1.75;color:var(--text);}
 .ac-full p{margin-bottom:6px;}
 .ac-full strong{color:var(--accent2);display:block;margin-top:10px;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
-@media(max-width:768px){
-  .board-area{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 0;}
-  .ac-short{font-size:12px;}
-  .ac-more-btn{font-size:10px;padding:5px 10px;}
-}
 .selected-sq{background:rgba(201,168,76,.8) !important;}
 .arrow-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;}
 </style>
@@ -270,10 +338,15 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
       <canvas id="evalChart" height="90"></canvas>
     </div>
   </div>
+
+  <!-- MOBILE: двухколоночная зона для Ходов + Движка -->
+  <div id="mobile-bottom-grid" style="display:none;width:100%;">
+    <!-- Перемещаемые блоки будут здесь через JS -->
+  </div>
 </div>
 
 <!-- RIGHT -->
-<div style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;flex-direction:column;gap:14px;" id="right-col">
   <div class="panel moves-wrap" id="moves-panel">
     <div class="ph"><div class="dot"></div><h2>Ходы</h2><div class="scroll-btns"><button class="nb" onclick="scrollMovesUp()">↑</button><button class="nb" onclick="scrollMovesDown()">↓</button></div></div>
     <div class="pb" style="padding:10px;">
@@ -333,7 +406,7 @@ let evalChart   = null;
 let arrows = [];
 let drawingArrow = null;
 let justDrewArrow = false;
-let lastMouseButton = 0; // Отслеживаем последнюю кнопку мыши
+let lastMouseButton = 0;
 let pgnStore    = '';
 let whiteAccuracy = 0;
 let blackAccuracy = 0;
@@ -341,6 +414,31 @@ let whiteAvgLoss = 0;
 let blackAvgLoss = 0;
 
 const PIECE_THEME = 'https://lichess1.org/assets/piece/cburnett/{piece}.svg';
+
+// ── Mobile layout rearrange ──
+function isMobile() { return window.innerWidth <= 768; }
+
+function rearrangeForMobile() {
+  const mobileGrid = document.getElementById('mobile-bottom-grid');
+  const rightCol   = document.getElementById('right-col');
+  const movesPanel = document.getElementById('moves-panel');
+  const enginePanel= document.getElementById('engine-panel');
+
+  if (isMobile()) {
+    mobileGrid.style.display = 'grid';
+    // Перемещаем блоки в мобильную сетку
+    mobileGrid.appendChild(movesPanel);
+    mobileGrid.appendChild(enginePanel);
+    rightCol.style.display = 'none';
+  } else {
+    mobileGrid.style.display = 'none';
+    rightCol.style.display = 'flex';
+    rightCol.appendChild(movesPanel);
+    rightCol.appendChild(enginePanel);
+  }
+}
+
+window.addEventListener('resize', rearrangeForMobile);
 
 // ── Board init ──
 function createBoard(fen, draggable) {
@@ -358,7 +456,6 @@ function createBoard(fen, draggable) {
   }
   board = Chessboard('chessboard', cfg);
 
-  // Arrows
   const boardEl = document.getElementById('chessboard');
   boardEl.style.position = 'relative';
   let overlay = document.getElementById('arrow-overlay');
@@ -383,40 +480,30 @@ function createBoard(fen, draggable) {
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   document.getElementById('chessboard').addEventListener('mousedown', function(e) {
-  lastMouseButton = e.button;
-}, true);
+    lastMouseButton = e.button;
+  }, true);
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
-    lastMouseButton = e.button; // Сохраняем кнопку мыши
-    if (e.button === 0 && justDrewArrow) {
-      clearArrows();
-      justDrewArrow = false;
-    }
+    lastMouseButton = e.button;
+    if (e.button === 0 && justDrewArrow) { clearArrows(); justDrewArrow = false; }
     if (e.button === 2) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow = { from: square };
-      }
+      if (square) drawingArrow = { from: square };
     }
   });
   $('#chessboard').on('mousemove', e => {
     if (drawingArrow) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow.to = square;
-        drawTempArrow(drawingArrow.from, square);
-      }
+      if (square) { drawingArrow.to = square; drawTempArrow(drawingArrow.from, square); }
     }
   });
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
       justDrewArrow = true;
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault(); e.stopImmediatePropagation();
     }
-    drawingArrow = null;
-    clearTempArrow();
+    drawingArrow = null; clearTempArrow();
   });
 }
 
@@ -430,7 +517,7 @@ function onDragStart(source, piece) {
 }
 
 function onDrop(source, target) {
-   if (lastMouseButton === 2) return 'snapback';
+  if (lastMouseButton === 2) return 'snapback';
   clearHighlights();
   const move = exploreGame.move({ from: source, to: target, promotion: 'q' });
   if (!move) return 'snapback';
@@ -446,14 +533,7 @@ function onSnapEnd() {
 let selectedSquare = null;
 
 function onSquareClick(square, event) {
-  // Если только что нарисовали стрелку, очищаем её и останавливаемся
-  if (justDrewArrow) {
-    clearArrows();
-    justDrewArrow = false;
-    return;
-  }
-  
-  // Игнорируем правый клик
+  if (justDrewArrow) { clearArrows(); justDrewArrow = false; return; }
   if (lastMouseButton === 2) return;
   if (!exploreGame) return;
 
@@ -494,14 +574,12 @@ function highlightMove(from, to) {
 
 function highlightLastMove() {
   if (curIdx === 0) { clearHighlights(); return; }
-  // Rebuild temp game to get last move
   const tmp = new Chess();
   for (let i = 0; i < curIdx; i++) tmp.move(allMoves[i]);
   const hist = tmp.history({ verbose: true });
   if (hist.length > 0) {
     const mv = hist[hist.length - 1];
     highlightMove(mv.from, mv.to);
-    // King in check highlight
     if (tmp.in_check()) {
       const turn = tmp.turn();
       ['a','b','c','d','e','f','g','h'].forEach(f => {
@@ -559,8 +637,7 @@ async function loadGame() {
     document.getElementById('bname').textContent         = data.black;
     document.getElementById('rbadge').textContent        = data.result;
     document.getElementById('players-bar').style.display = 'flex';
-    
-    // Update accuracy display
+
     document.getElementById('acc-wname').textContent     = data.white;
     document.getElementById('acc-bname').textContent     = data.black;
     document.getElementById('acc-white').textContent     = whiteAccuracy + '%';
@@ -574,6 +651,9 @@ async function loadGame() {
     document.getElementById('nav-row').style.display     = 'flex';
     document.getElementById('mode-row').style.display    = 'flex';
     document.getElementById('analyze-btn').style.display = 'block';
+
+    // После показа панелей — переразмещаем для мобилки
+    rearrangeForMobile();
 
     buildEvalChart();
     fetchMoveExplanation(pgn, null, null, null);
@@ -598,7 +678,6 @@ function buildMovesGrid() {
       const cell = document.createElement('div');
       if (idx >= allMoves.length) { cell.className='mc empty'; grid.appendChild(cell); return; }
       cell.className = 'mc'; cell.dataset.idx = idx; cell.textContent = allMoves[idx];
-      // Добавляем значок только если есть оценка хода
       if (annotations[idx]) {
         const sp = document.createElement('span');
         sp.className = 'ann ' + getAnnClass(annotations[idx]);
@@ -624,19 +703,13 @@ function goTo(idx) {
   chessGame = new Chess();
   for (let i = 0; i < idx; i++) chessGame.move(allMoves[i]);
 
-  // Update board position (no animation for fast nav)
   if (board) board.position(chessGame.fen(), false);
-
-  // Highlights after short delay so board renders first
   setTimeout(highlightLastMove, 30);
 
   if (mode === 'explore') exploreGame = new Chess(chessGame.fen());
 
-  // сброс Engine preview, если есть
   cancelEngineMove();
-
-  clearArrows(); // Clear arrows on navigation
-
+  clearArrows();
   updateMoveHL();
   updateNav();
   updateEvalForIdx(idx);
@@ -675,13 +748,16 @@ function updateEvalBar(score) {
   if (score>=0){top.textContent='';bot.textContent=d;}else{top.textContent=d;bot.textContent='';}
 }
 
-// ── Engine lines (replaces top moves) ──
+// ── Engine lines ──
 function renderEngineLines(lines) {
   const panel = document.getElementById('engine-panel');
   const container = document.getElementById('engine-lines');
   if (!lines || !lines.length) { panel.style.display = 'none'; return; }
 
   panel.style.display = 'block';
+  // После показа — переразмещаем
+  rearrangeForMobile();
+
   container.innerHTML = '';
 
   lines.forEach((line, li) => {
@@ -699,7 +775,7 @@ function renderEngineLines(lines) {
       const isWhite = (startTurn === 'w') ? (i % 2 === 0) : (i % 2 === 1);
       const isFirst = i === 0;
       if (isWhite) {
-        moveHtml += `<span class="eline-num" style="margin-right:1px;">${Math.floor(i/2)+1+(startTurn==='b'&&i===0?0:0)}.</span>`;
+        moveHtml += `<span class="eline-num" style="margin-right:1px;">${Math.floor(i/2)+1}.</span>`;
       }
       moveHtml += `<span class="eline-mv${isFirst?' first':''}" data-line="${li}" data-idx="${i}">${mv}</span>`;
     });
@@ -718,9 +794,7 @@ function renderEngineLines(lines) {
   });
 }
 
-// Обновляем updateTopMoves — теперь просто заглушка (данные идут через engine lines)
 function updateTopMoves(idx) {
-  // В режиме просмотра линии обновляются через fetchEngineLines
   fetchEngineLines(chessGame.fen());
 }
 
@@ -737,26 +811,18 @@ async function fetchEngineLines(fen) {
 }
 
 async function fetchPositionAnalysis(fen) {
-  // Explore mode — same endpoint
   fetchEngineLines(fen);
 }
 
 let enginePreview = null;
 let enginePreviewFromFen = null;
 
-function flashMove(san) {
-  // переименовано и новый behavior: применить ход, но не откатывать.
-  applyEngineMove(san);
-}
+function flashMove(san) { applyEngineMove(san); }
 
 function applyEngineMove(san) {
   const currentGame = (mode==='explore' ? exploreGame : chessGame);
   if (!currentGame) return;
-
-  // Сброс предыдущего превью
-  if (enginePreview) {
-    cancelEngineMove();
-  }
+  if (enginePreview) cancelEngineMove();
 
   const tmp = new Chess(currentGame.fen());
   const mv = tmp.move(san);
@@ -773,11 +839,9 @@ function applyEngineMove(san) {
 
 function cancelEngineMove() {
   if (!enginePreview || !enginePreviewFromFen) return;
-
   board.position(enginePreviewFromFen, false);
   clearHighlights();
   highlightLastMove();
-
   enginePreview = null;
   enginePreviewFromFen = null;
   document.getElementById('engine-cancel-btn').style.display = 'none';
@@ -794,16 +858,12 @@ function setMode(m) {
     exploreGame = new Chess(chessGame.fen());
     createBoard(chessGame.fen(), true);
     fetchPositionAnalysis(exploreGame.fen());
-    // Добавляем обработку кликов вручную для мобилки
     setTimeout(() => {
       $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
-        // Игнорируем правый клик (для рисования стрелок)
         if (lastMouseButton === 2) return;
-        if (justDrewArrow) return; // Также не делаем ход если только что рисовали стрелку
+        if (justDrewArrow) return;
         const sq = $(this).attr('data-square');
-        if (sq) {
-          onSquareClick(sq, e);
-        }
+        if (sq) onSquareClick(sq, e);
       });
     }, 300);
   } else {
@@ -812,32 +872,11 @@ function setMode(m) {
     createBoard(chessGame.fen(), false);
     setTimeout(highlightLastMove, 50);
   }
-  // Сброс Engine preview при смене режима
   cancelEngineMove();
-  clearArrows(); // Clear arrows on mode change
+  clearArrows();
 }
 
 // ── AI ──
-async function fetchPositionAnalysis(fen) {
-  try {
-    const res = await fetch('/analyze_position', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fen}) });
-    const data = await res.json();
-    if (data.top_moves) {
-      const c = document.getElementById('top-moves'); c.innerHTML='';
-      ['1. Лучший ход','2. Альтернатива'].forEach((lbl,i) => {
-        if (!data.top_moves[i]) return;
-        const tm = data.top_moves[i];
-        const item = document.createElement('div'); item.className='tm-item';
-        const sc = tm.score!=null?(tm.score>=0?'+':'')+(tm.score/100).toFixed(2):'?';
-        item.innerHTML=`<div class="tm-rank">${lbl}</div><div class="tm-move">${tm.move}</div><div class="tm-score ${(tm.score||0)>=0?'pos':'neg'}">${sc}</div>`;
-        item.onclick=()=>flashMove(tm.move);
-        c.appendChild(item);
-      });
-      if (data.score!==undefined) updateEvalBar(data.score);
-    }
-  } catch(e){}
-}
-
 async function analyzeCurrentMove() {
   if (mode==='explore') { fetchMoveExplanation(null,null,(exploreGame||chessGame).fen(),null); return; }
   fetchMoveExplanation(pgnStore, curIdx>0?curIdx-1:null, null, null);
@@ -864,24 +903,21 @@ async function fetchMoveExplanation(pgn, moveIndex, fen, moveSan) {
       document.getElementById('ac-hdr').style.display='none';
     }
 
-    // Разбиваем на краткое и подробное
     const txt = document.getElementById('ac-text');
     const html = data.analysis
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .split('\n\n').map(p=>p.trim()?`<p>${p.replace(/\n/g,'<br>')}</p>`:'').join('');
 
-    // Берём первый абзац как краткое резюме
     const paragraphs = data.analysis.split('\n\n').filter(p => p.trim());
     const shortText = paragraphs[0] || data.analysis;
     const shortHtml = shortText.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     const fullHtml = html;
-
     const summary = data.summary || shortHtml;
+
     txt.innerHTML = `
       <div class="ac-summary">${summary}</div>
       <div class="ac-full" style="display:none;">${fullHtml}</div>
       <button class="ac-more-btn" onclick="toggleAnalysis(this)">Подробнее ▾</button>
-    
     `;
     txt.style.display='block';
     txt.classList.remove('fade-in'); void txt.offsetWidth; txt.classList.add('fade-in');
@@ -892,13 +928,9 @@ function toggleAnalysis(btn) {
   const full = btn.previousElementSibling;
   const short = full.previousElementSibling;
   if(full.style.display === 'none') {
-    full.style.display = 'block';
-    short.style.display = 'none';
-    btn.textContent = 'Свернуть ▴';
+    full.style.display = 'block'; short.style.display = 'none'; btn.textContent = 'Свернуть ▴';
   } else {
-    full.style.display = 'none';
-    short.style.display = 'block';
-    btn.textContent = 'Подробнее ▾';
+    full.style.display = 'none'; short.style.display = 'block'; btn.textContent = 'Подробнее ▾';
   }
 }
 
@@ -967,7 +999,7 @@ function updateChartMarker(idx){
   evalChart.update('none');
 }
 
-// ── Scroll moves ──
+// ── Scroll moves (desktop only) ──
 function scrollMovesUp() {
   const grid = document.getElementById('moves-grid');
   grid.scrollTop -= 50;
@@ -1003,24 +1035,17 @@ function getSquareCenter(square) {
   const rank = square.charCodeAt(1) - 49;
   const boardEl = document.getElementById('chessboard');
   const size = boardEl.offsetWidth / 8;
-  return {
-    x: file * size + size / 2,
-    y: (7 - rank) * size + size / 2
-  };
+  return { x: file * size + size / 2, y: (7 - rank) * size + size / 2 };
 }
 
 function drawTempArrow(from, to) {
   clearTempArrow();
   const svg = document.getElementById('arrow-svg');
-  const f = getSquareCenter(from);
-  const t = getSquareCenter(to);
+  const f = getSquareCenter(from); const t = getSquareCenter(to);
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', f.x);
-  line.setAttribute('y1', f.y);
-  line.setAttribute('x2', t.x);
-  line.setAttribute('y2', t.y);
-  line.setAttribute('stroke', 'var(--accent)');
-  line.setAttribute('stroke-width', '3');
+  line.setAttribute('x1', f.x); line.setAttribute('y1', f.y);
+  line.setAttribute('x2', t.x); line.setAttribute('y2', t.y);
+  line.setAttribute('stroke', 'var(--accent)'); line.setAttribute('stroke-width', '3');
   line.setAttribute('marker-end', 'url(#arrowhead)');
   line.classList.add('temp-arrow');
   svg.appendChild(line);
@@ -1034,22 +1059,16 @@ function clearTempArrow() {
 
 function addArrow(from, to) {
   if (from === to) return;
-  arrows.push({ from, to });
-  justDrewArrow = true;
-  drawArrow(from, to);
+  arrows.push({ from, to }); justDrewArrow = true; drawArrow(from, to);
 }
 
 function drawArrow(from, to) {
   const svg = document.getElementById('arrow-svg');
-  const f = getSquareCenter(from);
-  const t = getSquareCenter(to);
+  const f = getSquareCenter(from); const t = getSquareCenter(to);
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', f.x);
-  line.setAttribute('y1', f.y);
-  line.setAttribute('x2', t.x);
-  line.setAttribute('y2', t.y);
-  line.setAttribute('stroke', 'var(--accent)');
-  line.setAttribute('stroke-width', '3');
+  line.setAttribute('x1', f.x); line.setAttribute('y1', f.y);
+  line.setAttribute('x2', t.x); line.setAttribute('y2', t.y);
+  line.setAttribute('stroke', 'var(--accent)'); line.setAttribute('stroke-width', '3');
   line.setAttribute('marker-end', 'url(#arrowhead)');
   line.classList.add('arrow');
   svg.appendChild(line);
@@ -1066,7 +1085,6 @@ function clearArrows() {
 $(document).ready(()=>{
   board=Chessboard('chessboard',{position:'start',pieceTheme:PIECE_THEME,draggable:false,showNotation:true});
 
-  // Arrows
   const boardEl = document.getElementById('chessboard');
   boardEl.style.position = 'relative';
   let overlay = document.getElementById('arrow-overlay');
@@ -1082,47 +1100,37 @@ $(document).ready(()=>{
   }
   boardEl.appendChild(overlay);
   overlay.style.position = 'absolute';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.pointerEvents = 'none';
-  overlay.style.zIndex = '10';
+  overlay.style.top = '0'; overlay.style.left = '0';
+  overlay.style.width = '100%'; overlay.style.height = '100%';
+  overlay.style.pointerEvents = 'none'; overlay.style.zIndex = '10';
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
-    lastMouseButton = e.button; // Сохраняем кнопку мыши
-    if (e.button === 0 && justDrewArrow) {
-      clearArrows();
-      justDrewArrow = false;
-    }
+    lastMouseButton = e.button;
+    if (e.button === 0 && justDrewArrow) { clearArrows(); justDrewArrow = false; }
     if (e.button === 2) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow = { from: square };
-      }
+      if (square) drawingArrow = { from: square };
     }
   });
   $('#chessboard').on('mousemove', e => {
     if (drawingArrow) {
       const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow.to = square;
-        drawTempArrow(drawingArrow.from, square);
-      }
+      if (square) { drawingArrow.to = square; drawTempArrow(drawingArrow.from, square); }
     }
   });
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
       justDrewArrow = true;
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault(); e.stopImmediatePropagation();
     }
-    drawingArrow = null;
-    clearTempArrow();
+    drawingArrow = null; clearTempArrow();
   });
+
+  // Инициализируем мобильный layout
+  rearrangeForMobile();
 });
 </script>
 </body>
