@@ -382,6 +382,9 @@ function createBoard(fen, draggable) {
   overlay.style.zIndex = '10';
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
+  document.getElementById('chessboard').addEventListener('mousedown', function(e) {
+  lastMouseButton = e.button;
+}, true);
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
     lastMouseButton = e.button; // Сохраняем кнопку мыши
@@ -419,7 +422,7 @@ function createBoard(fen, draggable) {
 
 function onDragStart(source, piece) {
   if (lastMouseButton === 2) return false;
-  if (drawingArrow) return false; // Prevent dragging when drawing arrows
+  if (drawingArrow) return false;
   if (!exploreGame || exploreGame.game_over()) return false;
   if (exploreGame.turn() === 'w' && piece.startsWith('b')) return false;
   if (exploreGame.turn() === 'b' && piece.startsWith('w')) return false;

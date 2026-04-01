@@ -440,6 +440,9 @@ $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
   overlay.style.zIndex = '10';
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
+ document.getElementById('chessboard').addEventListener('mousedown', function(e) {
+  lastMouseButton = e.button;
+}, true);
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
     lastMouseButton = e.button; // Сохраняем кнопку мыши
@@ -518,7 +521,7 @@ function onSquareClick(square, event) {
 }
 
 function onDragStart(source, piece) {
-  if (lastMouseButton === 2) return false; // ← добавить
+  if (lastMouseButton === 2) return false;
   if (drawingArrow) return false;
   if (!gameActive) return false;
   if (gameChess.game_over()) return false;
@@ -526,7 +529,6 @@ function onDragStart(source, piece) {
   if (!myTurn) return false;
   if (playerColor === 'white' && piece.startsWith('b')) return false;
   if (playerColor === 'black' && piece.startsWith('w')) return false;
-}
 }
 
 function onDrop(source, target) {
