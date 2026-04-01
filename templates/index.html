@@ -418,6 +418,7 @@ function createBoard(fen, draggable) {
 }
 
 function onDragStart(source, piece) {
+  if (lastMouseButton === 2) return false;
   if (drawingArrow) return false; // Prevent dragging when drawing arrows
   if (!exploreGame || exploreGame.game_over()) return false;
   if (exploreGame.turn() === 'w' && piece.startsWith('b')) return false;
@@ -426,6 +427,7 @@ function onDragStart(source, piece) {
 }
 
 function onDrop(source, target) {
+   if (lastMouseButton === 2) return 'snapback';
   clearHighlights();
   const move = exploreGame.move({ from: source, to: target, promotion: 'q' });
   if (!move) return 'snapback';
@@ -1122,4 +1124,3 @@ $(document).ready(()=>{
 </script>
 </body>
 </html>
-

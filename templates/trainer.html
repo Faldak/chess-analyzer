@@ -518,7 +518,8 @@ function onSquareClick(square, event) {
 }
 
 function onDragStart(source, piece) {
-  if (drawingArrow) return false; // Prevent dragging when drawing arrows
+  if (lastMouseButton === 2) return false; // ← добавить
+  if (drawingArrow) return false;
   if (!gameActive) return false;
   if (gameChess.game_over()) return false;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
@@ -526,8 +527,11 @@ function onDragStart(source, piece) {
   if (playerColor === 'white' && piece.startsWith('b')) return false;
   if (playerColor === 'black' && piece.startsWith('w')) return false;
 }
+}
 
 function onDrop(source, target) {
+  if (lastMouseButton === 2) return 'snapback';
+
   // Remove old highlights
   $('.square-55d63').removeClass('highlight-from highlight-to');
 
@@ -550,11 +554,6 @@ function onDrop(source, target) {
   if (gameChess.game_over()) { setTimeout(() => endGame(), 300); return; }
   setTimeout(() => trainerMakeMove(move.san), 600);
 }
-
-function onSnapEnd() {
-  if (board) board.position(gameChess.fen());
-}
-
 // ── Trainer move ──
 async function trainerMakeMove(playerMoveSan) {
   if (!gameActive) return;
