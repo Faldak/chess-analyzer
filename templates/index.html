@@ -80,6 +80,10 @@ textarea::placeholder{color:var(--text-muted);}
 .highlight-from{background:rgba(201,168,76,.6) !important;}
 .highlight-to{background:rgba(201,168,76,.75) !important;}
 .highlight-check{background:rgba(224,90,90,.6) !important;}
+/* Tap-to-move selected square highlight */
+.highlight-selected{background:rgba(100,180,255,.65) !important;}
+/* Valid move dots */
+.highlight-valid{background:rgba(201,168,76,.35) !important;}
 .nav-row{display:flex;gap:6px;align-items:center;}
 .nb{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:13px;transition:all .13s;}
 .nb:hover{border-color:var(--accent);color:var(--accent);}
@@ -212,7 +216,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
   /* Bottom tabs: Moves | Engine | AI */
   .m-tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-  .m-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;border-right:1px solid var(--border);transition:all .15s;background:transparent;}
+  .m-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;border-right:1px solid var(--border);transition:all .15px;background:transparent;}
   .m-tab:last-child{border-right:none;}
   .m-tab.active{background:rgba(201,168,76,.12);color:var(--accent);}
 
@@ -520,6 +524,9 @@ let blackAccuracy = 0;
 let whiteAvgLoss = 0;
 let blackAvgLoss = 0;
 
+// ── Mobile tap-to-move state ──
+let mTapSelected = null; // currently selected square on mobile
+
 const PIECE_THEME = 'https://lichess1.org/assets/piece/cburnett/{piece}.svg';
 
 // ── Board init ──
@@ -536,16 +543,114 @@ function createMobileBoard(fen, draggable){
   const boardEl = document.getElementById('m-chessboard');
   const w = boardEl.offsetWidth || (window.innerWidth - 36);
   boardEl.style.width = w+'px';
-  const cfg = {position:fen||'start',pieceTheme:PIECE_THEME,draggable,showNotation:true};
-  if(draggable){cfg.onDragStart=onDragStartM;cfg.onDrop=onDropM;cfg.onSnapEnd=onSnapEndM;}
+  // On mobile we always use tap-to-move (no drag), so draggable=false
+  const cfg = {position:fen||'start',pieceTheme:PIECE_THEME,draggable:false,showNotation:true};
   mboard = Chessboard('m-chessboard', cfg);
   // Eval bar height = board height
   setTimeout(()=>{
     const bh = document.getElementById('m-chessboard').offsetHeight;
     document.getElementById('m-eval-bar-el').style.height = bh+'px';
   },100);
-  setupMobileArrows();
+  setupArrows('m-chessboard');
+  setupMobileTapToMove();
 }
+
+// ══════════════════════════════════════════
+// ── MOBILE TAP-TO-MOVE ──
+// ══════════════════════════════════════════
+function setupMobileTapToMove(){
+  const boardEl = document.getElementById('m-chessboard');
+
+  // Block scroll while touching the board
+  boardEl.addEventListener('touchstart', function(e){
+    // Only block scroll if in explore mode (interactive)
+    if(mode === 'explore') e.preventDefault();
+  }, {passive: false});
+
+  boardEl.addEventListener('touchmove', function(e){
+    if(mode === 'explore') e.preventDefault();
+  }, {passive: false});
+
+  boardEl.addEventListener('touchend', function(e){
+    if(mode !== 'explore') return;
+    e.preventDefault();
+
+    const touch = e.changedTouches[0];
+    const sq = getSquareFromEl(touch.clientX, touch.clientY, 'm-chessboard');
+    if(!sq) return;
+
+    handleMobileTap(sq);
+  }, {passive: false});
+}
+
+function handleMobileTap(sq){
+  if(!exploreGame) return;
+
+  // If nothing selected yet
+  if(!mTapSelected){
+    const piece = exploreGame.get(sq);
+    if(!piece) return; // tapped empty square — nothing to select
+    // Check it's the right color's turn
+    if(piece.color !== exploreGame.turn()) return;
+    // Select the square
+    mTapSelected = sq;
+    clearHighlightsM();
+    $(`#m-chessboard [data-square="${sq}"]`).addClass('highlight-selected');
+    // Show valid move dots
+    showValidMovesM(sq);
+    return;
+  }
+
+  // A square was already selected
+  if(mTapSelected === sq){
+    // Tapped same square — deselect
+    clearMobileTapSelection();
+    return;
+  }
+
+  const piece = exploreGame.get(sq);
+  // If tapped own piece — switch selection
+  if(piece && piece.color === exploreGame.turn()){
+    clearMobileTapSelection();
+    mTapSelected = sq;
+    $(`#m-chessboard [data-square="${sq}"]`).addClass('highlight-selected');
+    showValidMovesM(sq);
+    return;
+  }
+
+  // Try to make the move
+  const move = exploreGame.move({from: mTapSelected, to: sq, promotion: 'q'});
+  clearMobileTapSelection();
+
+  if(!move){
+    // Illegal move — deselect silently
+    return;
+  }
+
+  // Move succeeded
+  if(mboard) mboard.position(exploreGame.fen(), false);
+  clearHighlightsM();
+  highlightMoveM(move.from, move.to);
+  mUpdateEvalBar(null);
+  fetchPositionAnalysis(exploreGame.fen());
+  fetchMoveExplanation(null, null, exploreGame.fen(), move.san);
+}
+
+function showValidMovesM(sq){
+  if(!exploreGame) return;
+  const moves = exploreGame.moves({square: sq, verbose: true});
+  moves.forEach(m => {
+    $(`#m-chessboard [data-square="${m.to}"]`).addClass('highlight-valid');
+  });
+}
+
+function clearMobileTapSelection(){
+  mTapSelected = null;
+  clearHighlightsM();
+  highlightLastMove(); // restore last move highlight
+}
+
+// ══════════════════════════════════════════
 
 function onDragStart(source,piece){
   if(lastMouseButton===2||drawingArrow||!exploreGame||exploreGame.game_over())return false;
@@ -565,23 +670,6 @@ function onDrop(source,target){
 }
 function onSnapEnd(){if(exploreGame)board.position(exploreGame.fen());}
 
-function onDragStartM(source,piece){
-  if(!exploreGame||exploreGame.game_over())return false;
-  if(exploreGame.turn()==='w'&&piece.startsWith('b'))return false;
-  if(exploreGame.turn()==='b'&&piece.startsWith('w'))return false;
-  return true;
-}
-function onDropM(source,target){
-  clearHighlightsM();
-  const move=exploreGame.move({from:source,to:target,promotion:'q'});
-  if(!move)return'snapback';
-  highlightMoveM(source,target);
-  mUpdateEvalBar(null);
-  fetchPositionAnalysis(exploreGame.fen());
-  fetchMoveExplanation(null,null,exploreGame.fen(),move.san);
-}
-function onSnapEndM(){if(exploreGame&&mboard)mboard.position(exploreGame.fen());}
-
 let selectedSquare = null;
 
 function setupArrows(boardId){
@@ -600,31 +688,32 @@ function setupArrows(boardId){
   const svg=overlay.querySelector('svg');
   svg.innerHTML='<defs><marker id="arrowhead-'+boardId+'" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
 
-  $('#'+boardId).off('contextmenu').on('contextmenu',e=>e.preventDefault());
-  $('#'+boardId).off('mousedown.arrows').on('mousedown.arrows',e=>{
-    lastMouseButton=e.button;
-    if(e.button===0&&justDrewArrow){clearArrows();justDrewArrow=false;}
-    if(e.button===2){
-      const sq=getSquareFromEl(e.clientX,e.clientY,boardId);
-      if(sq)drawingArrow={from:sq,boardId};
-    }
-  });
-  $('#'+boardId).off('mousemove.arrows').on('mousemove.arrows',e=>{
-    if(drawingArrow&&drawingArrow.boardId===boardId){
-      const sq=getSquareFromEl(e.clientX,e.clientY,boardId);
-      if(sq){drawingArrow.to=sq;drawTempArrow(drawingArrow.from,sq,boardId);}
-    }
-  });
-  $('#'+boardId).off('mouseup.arrows').on('mouseup.arrows',e=>{
-    if(drawingArrow&&drawingArrow.to&&drawingArrow.from!==drawingArrow.to&&drawingArrow.boardId===boardId){
-      addArrow(drawingArrow.from,drawingArrow.to,boardId);
-      justDrewArrow=true;e.preventDefault();e.stopImmediatePropagation();
-    }
-    drawingArrow=null;clearTempArrow(boardId);
-  });
+  if(boardId !== 'm-chessboard'){
+    // PC arrow setup only
+    $('#'+boardId).off('contextmenu').on('contextmenu',e=>e.preventDefault());
+    $('#'+boardId).off('mousedown.arrows').on('mousedown.arrows',e=>{
+      lastMouseButton=e.button;
+      if(e.button===0&&justDrewArrow){clearArrows();justDrewArrow=false;}
+      if(e.button===2){
+        const sq=getSquareFromEl(e.clientX,e.clientY,boardId);
+        if(sq)drawingArrow={from:sq,boardId};
+      }
+    });
+    $('#'+boardId).off('mousemove.arrows').on('mousemove.arrows',e=>{
+      if(drawingArrow&&drawingArrow.boardId===boardId){
+        const sq=getSquareFromEl(e.clientX,e.clientY,boardId);
+        if(sq){drawingArrow.to=sq;drawTempArrow(drawingArrow.from,sq,boardId);}
+      }
+    });
+    $('#'+boardId).off('mouseup.arrows').on('mouseup.arrows',e=>{
+      if(drawingArrow&&drawingArrow.to&&drawingArrow.from!==drawingArrow.to&&drawingArrow.boardId===boardId){
+        addArrow(drawingArrow.from,drawingArrow.to,boardId);
+        justDrewArrow=true;e.preventDefault();e.stopImmediatePropagation();
+      }
+      drawingArrow=null;clearTempArrow(boardId);
+    });
+  }
 }
-
-function setupMobileArrows(){setupArrows('m-chessboard');}
 
 function getSquareFromEl(x,y,boardId){
   const el=document.getElementById(boardId);
@@ -687,7 +776,7 @@ function clearArrows(){
 }
 
 function clearHighlights(){$('#chessboard .square-55d63').removeClass('highlight-from highlight-to highlight-check');}
-function clearHighlightsM(){$('#m-chessboard .square-55d63').removeClass('highlight-from highlight-to highlight-check');}
+function clearHighlightsM(){$('#m-chessboard .square-55d63').removeClass('highlight-from highlight-to highlight-check highlight-selected highlight-valid');}
 function highlightMove(from,to){clearHighlights();$(`#chessboard [data-square="${from}"]`).addClass('highlight-from');$(`#chessboard [data-square="${to}"]`).addClass('highlight-to');}
 function highlightMoveM(from,to){clearHighlightsM();$(`#m-chessboard [data-square="${from}"]`).addClass('highlight-from');$(`#m-chessboard [data-square="${to}"]`).addClass('highlight-to');}
 
@@ -844,7 +933,7 @@ function goTo(idx){
   if(mboard)mboard.position(chessGame.fen(),false);
   setTimeout(highlightLastMove,30);
   if(mode==='explore'){exploreGame=new Chess(chessGame.fen());}
-  cancelEngineMove();clearArrows();
+  cancelEngineMove();clearArrows();clearMobileTapSelection();
   updateMoveHL();updateNav();updateEvalForIdx(idx);
   fetchEngineLines(chessGame.fen());updateChartMarker(idx);updateMChartMarker(idx);
 }
@@ -973,10 +1062,10 @@ function setMode(m){
   if(m==='explore'){
     exploreGame=new Chess(chessGame.fen());
     createBoard(chessGame.fen(),true);
-    createMobileBoard(chessGame.fen(),true);
+    createMobileBoard(chessGame.fen(),false); // mobile always false — uses tap
     fetchPositionAnalysis(exploreGame.fen());
   } else {
-    exploreGame=null;selectedSquare=null;
+    exploreGame=null;selectedSquare=null;mTapSelected=null;
     createBoard(chessGame.fen(),false);
     createMobileBoard(chessGame.fen(),false);
     setTimeout(highlightLastMove,50);
@@ -1130,14 +1219,21 @@ $(document).ready(()=>{
   const mW=mBoardEl.offsetWidth||(window.innerWidth-36);
   mBoardEl.style.width=mW+'px';
   mboard=Chessboard('m-chessboard',{position:'start',pieceTheme:PIECE_THEME,draggable:false,showNotation:true});
-  setupMobileArrows();
+  setupArrows('m-chessboard');
+  setupMobileTapToMove();
 
-  // Touch swipe for mobile nav
+  // Touch swipe for mobile nav — only in review mode, and only outside board when not in explore
   let touchStartX=0;
-  document.getElementById('m-chessboard').addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
+  let touchStartY=0;
+  document.getElementById('m-chessboard').addEventListener('touchstart',e=>{
+    touchStartX=e.touches[0].clientX;
+    touchStartY=e.touches[0].clientY;
+  },{passive:true});
   document.getElementById('m-chessboard').addEventListener('touchend',e=>{
+    if(mode==='explore') return; // no swipe nav in explore mode
     const dx=e.changedTouches[0].clientX-touchStartX;
-    if(Math.abs(dx)>40){if(dx>0)prev();else next();}
+    const dy=Math.abs(e.changedTouches[0].clientY-touchStartY);
+    if(Math.abs(dx)>40 && dy<30){if(dx>0)prev();else next();}
   },{passive:true});
 });
 </script>
