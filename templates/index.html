@@ -23,13 +23,10 @@ header{padding:22px 0 18px;border-bottom:1px solid var(--border);margin-bottom:2
 .lt h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;}
 .lt p{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 .badge{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--accent2);font-size:11px;padding:3px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;}
-
-/* ── Language switcher ── */
 .lang-switcher{display:flex;gap:4px;align-items:center;margin-left:auto;}
 .lang-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;}
 .lang-btn:hover{border-color:var(--accent);color:var(--accent);}
 .lang-btn.active{background:rgba(201,168,76,.15);border-color:var(--accent);color:var(--accent);font-weight:600;}
-
 .grid{display:grid;grid-template-columns:300px 1fr 300px;gap:18px;align-items:start;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .ph{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
@@ -145,15 +142,11 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 .ac-full p{margin-bottom:6px;}
 .ac-full strong{color:var(--accent2);display:block;margin-top:10px;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
 .engine-cancel-btn{display:none;background:transparent;border:1px solid rgba(224,90,90,.4);color:#e05a5a;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;margin-top:8px;align-items:center;gap:5px;}
-
-/* ── PC ── */
 @media(min-width:769px){
   #chessboard{width:400px;}
   .eval-bar-wrap{height:400px;}
   .mobile-layout{display:none !important;}
 }
-
-/* ── MOBILE ── */
 @media(max-width:768px){
   .container{padding:0 8px;}
   header{padding:10px 0 8px;margin-bottom:10px;}
@@ -163,7 +156,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   .lang-switcher{margin-left:0;}
   .grid{display:none !important;}
   .mobile-layout{display:flex;flex-direction:column;gap:8px;}
-
   .m-pgn{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .m-pgn-hdr{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;cursor:pointer;}
   .m-pgn-hdr .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
@@ -173,7 +165,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   .m-pgn-body.open{display:block;}
   .m-pgn-body textarea{min-height:80px;font-size:10px;}
   .m-pgn-body .btn{padding:8px;font-size:12px;margin-top:8px;}
-
   .m-board-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
   .m-top-strip{width:100%;display:none;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
   .m-player-side{display:flex;flex-direction:column;gap:2px;}
@@ -183,7 +174,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   .m-pname{font-size:11px;font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .m-acc{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);}
   .m-result{display:none;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--accent);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);padding:2px 8px;border-radius:5px;}
-
   .m-board-row{display:flex;align-items:center;gap:6px;width:100%;}
   .m-eval-wrap{display:none;align-items:stretch;gap:6px;width:100%;}
   .m-eval-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;width:14px;flex-shrink:0;}
@@ -191,50 +181,39 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
   .m-eval-bar{flex:1;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;position:relative;min-height:300px;}
   .m-eval-fill{position:absolute;bottom:0;left:0;right:0;background:#f0ede8;transition:height .4s ease;}
   #m-chessboard{flex:1;min-width:0;}
-
   .m-nav{display:none;gap:4px;align-items:center;justify-content:center;width:100%;}
   .m-nb{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .13s;}
   .m-nb:hover{border-color:var(--accent);color:var(--accent);}
   .m-nb:disabled{opacity:.3;cursor:not-allowed;}
   .m-counter{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:6px;font-size:10px;font-family:'JetBrains Mono',monospace;}
-
   .m-mode{display:none;gap:5px;width:100%;}
   .m-mode-btn{flex:1;padding:6px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);transition:all .15s;}
   .m-mode-btn.active{background:rgba(201,168,76,.15);border-color:var(--accent);color:var(--accent);}
-
   .m-explore-banner{display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--accent);text-align:center;width:100%;}
-
   .m-tabs{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .m-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;border-right:1px solid var(--border);transition:all .15s;background:transparent;}
   .m-tab:last-child{border-right:none;}
   .m-tab.active{background:rgba(201,168,76,.12);color:var(--accent);}
-
   .m-tab-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .m-tab-panel.active{display:block;}
-
   .m-moves-grid{display:grid;grid-template-columns:24px 1fr 1fr;max-height:180px;overflow-y:auto;}
   .m-moves-grid::-webkit-scrollbar{width:3px;}.m-moves-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-
   .m-engine-inner{padding:10px 12px;max-height:200px;overflow-y:auto;}
   .m-engine-inner::-webkit-scrollbar{width:3px;}
-
   .m-ai-inner{max-height:240px;overflow-y:auto;}
   .m-ai-inner .ac{border:none;border-radius:0;}
   .m-ai-btn{width:calc(100% - 20px);margin:0 10px 10px;padding:8px;font-size:11px;}
-
   .m-cancel-btn{display:none;width:100%;margin-bottom:6px;padding:7px;background:transparent;border:1px solid rgba(224,90,90,.4);color:#e05a5a;border-radius:6px;font-size:11px;cursor:pointer;}
-
   .m-chart-wrap{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
   .m-chart-hdr{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
   .m-chart-hdr .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
   .m-chart-hdr h2{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
   .m-chart-inner{padding:8px 10px 12px;}
-
   footer{padding:12px 0 8px;font-size:10px;}
 }
 </style>
 </head>
-<body>
+<body data-title-key="ui.siteTitle">
 <div class="container">
 
 <!-- ══ HEADER ══ -->
@@ -259,7 +238,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <div class="grid">
   <!-- LEFT -->
   <div style="display:flex;flex-direction:column;gap:14px;">
-    <!-- PGN panel -->
     <div class="panel">
       <div class="ph"><div class="dot"></div><h2 data-key="ui.pgnTitle">Партия PGN</h2></div>
       <div class="pb">
@@ -271,7 +249,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
         </button>
       </div>
     </div>
-    <!-- AI Analysis panel -->
     <div class="panel">
       <div class="ph"><div class="dot"></div><h2 data-key="ui.aiTitle">Анализ ИИ</h2></div>
       <div class="ac" id="ac">
@@ -326,7 +303,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
   <!-- RIGHT -->
   <div style="display:flex;flex-direction:column;gap:14px;">
-    <!-- Moves panel -->
     <div class="panel moves-wrap" id="moves-panel">
       <div class="ph">
         <div class="dot"></div>
@@ -355,7 +331,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
         <div class="moves-grid" id="moves-grid"></div>
       </div>
     </div>
-    <!-- Engine panel -->
     <div class="panel" id="engine-panel" style="display:none;">
       <div class="ph"><div class="dot"></div><h2 data-key="ui.engineTitle">Движок</h2></div>
       <div class="pb" style="padding:10px 14px;">
@@ -368,8 +343,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 
 <!-- ══ MOBILE LAYOUT ══ -->
 <div class="mobile-layout" id="mobile-layout">
-
-  <!-- PGN collapsible -->
   <div class="m-pgn">
     <div class="m-pgn-hdr" onclick="togglePgn()">
       <div class="dot"></div>
@@ -384,8 +357,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
       </button>
     </div>
   </div>
-
-  <!-- Players strip -->
   <div class="m-top-strip" id="m-top-strip">
     <div class="m-player-side">
       <div class="m-player-row"><div class="m-pcolor w"></div><div class="m-pname" id="m-wname">—</div></div>
@@ -397,8 +368,6 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
       <div class="m-acc" id="m-bacc"></div>
     </div>
   </div>
-
-  <!-- Board + eval bar -->
   <div class="m-eval-wrap" id="m-eval-wrap">
     <div class="m-eval-bar-wrap">
       <div class="eval-label" id="m-eval-top"></div>
@@ -409,11 +378,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
     </div>
     <div id="m-chessboard"></div>
   </div>
-
-  <!-- Explore banner -->
   <div class="m-explore-banner" id="m-explore-banner" data-key="ui.exploreBanner">Режим исследования</div>
-
-  <!-- Nav -->
   <div class="m-nav" id="m-nav">
     <button class="m-nb" id="m-nb-first" onclick="goTo(0)">⟪</button>
     <button class="m-nb" id="m-nb-prev" onclick="prev()">‹</button>
@@ -421,34 +386,22 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
     <button class="m-nb" id="m-nb-next" onclick="next()">›</button>
     <button class="m-nb" id="m-nb-last" onclick="goTo(allMoves.length)">⟫</button>
   </div>
-
-  <!-- Mode buttons -->
   <div class="m-mode" id="m-mode">
     <button class="m-mode-btn active" id="m-mode-review" onclick="setMode('review')" data-key="ui.modeReview">Просмотр</button>
     <button class="m-mode-btn" id="m-mode-explore" onclick="setMode('explore')" data-key="ui.modeExplore">Исследование</button>
   </div>
-
-  <!-- Cancel engine preview -->
   <button class="m-cancel-btn" id="m-cancel-btn" onclick="cancelEngineMove()" data-key="ui.cancelPreview">✕ Отменить предпросмотр</button>
-
-  <!-- Tabs -->
   <div class="m-tabs" id="m-tabs">
     <div class="m-tab active" onclick="mTab('moves')" data-key="ui.tabMoves">Ходы</div>
     <div class="m-tab" onclick="mTab('engine')" data-key="ui.tabEngine">Движок</div>
     <div class="m-tab" onclick="mTab('ai')" data-key="ui.tabAI">ИИ</div>
   </div>
-
-  <!-- Tab: Moves -->
   <div class="m-tab-panel active" id="m-panel-moves">
     <div class="m-moves-grid" id="m-moves-grid"></div>
   </div>
-
-  <!-- Tab: Engine -->
   <div class="m-tab-panel" id="m-panel-engine">
     <div class="m-engine-inner" id="m-engine-lines"></div>
   </div>
-
-  <!-- Tab: AI -->
   <div class="m-tab-panel" id="m-panel-ai">
     <div class="m-ai-inner">
       <div class="ac" id="m-ac">
@@ -464,13 +417,10 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
     </div>
     <button class="btn btn-outline m-ai-btn" id="m-analyze-btn" style="display:none;" onclick="analyzeCurrentMove()" data-key="ui.mAnalyzeBtn">🔍 Объяснить позицию</button>
   </div>
-
-  <!-- Chart -->
   <div class="m-chart-wrap" id="m-chart-wrap">
     <div class="m-chart-hdr"><div class="dot"></div><h2 data-key="ui.chartTitle">График</h2></div>
     <div class="m-chart-inner"><canvas id="m-evalChart" height="80"></canvas></div>
   </div>
-
 </div><!-- /.mobile-layout -->
 
 <footer>Chess Analyzer — AI + Stockfish</footer>
@@ -487,8 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ── Helpers ──
-function T(key){ return window.i18n ? window.i18n.t(key) : key; }
+function T(key) { return window.i18n ? window.i18n.t(key) : key; }
 
 // ══════════════════════════════════════════════════════
 // State
@@ -791,7 +740,6 @@ async function loadGameCore(pgn){
   createMobileBoard('start');
   goTo(0);
 
-  // PC UI
   document.getElementById('wname').textContent=data.white;
   document.getElementById('bname').textContent=data.black;
   document.getElementById('rbadge').textContent=data.result;
@@ -810,7 +758,6 @@ async function loadGameCore(pgn){
   document.getElementById('analyze-btn').style.display='block';
   buildEvalChart();
 
-  // Mobile UI
   document.getElementById('m-wname').textContent=data.white;
   document.getElementById('m-bname').textContent=data.black;
   document.getElementById('m-wacc').textContent=whiteAccuracy+'%';
@@ -1035,7 +982,7 @@ async function fetchMoveExplanation(pgn,moveIndex,fen,moveSan){
     // Pass current language and system prompt to backend
     const lang = window.i18n ? window.i18n.getCurrentLang() : 'ru';
     body.lang = lang;
-    body.system_prompt = window.i18n ? window.i18n.t('ai.systemPrompt', lang) : '';
+    body.system_prompt = T('ai.systemPrompt');
 
     const res=await fetch('/analyze_move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
@@ -1164,11 +1111,9 @@ document.addEventListener('keydown',e=>{
 // Init
 // ══════════════════════════════════════════════════════
 $(document).ready(()=>{
-  // PC board
   board = Chessboard('chessboard', {position:'start', pieceTheme:PIECE_THEME, draggable:false, showNotation:true});
   setupArrows('chessboard');
 
-  // Mobile board — only if element exists
   const mBoardEl = document.getElementById('m-chessboard');
   if (mBoardEl) {
     const mW = mBoardEl.offsetWidth || (window.innerWidth - 50);
@@ -1177,7 +1122,6 @@ $(document).ready(()=>{
     setupArrows('m-chessboard');
     setupMobileTapToMove();
 
-    // Swipe nav
     let touchStartX=0, touchStartY=0;
     mBoardEl.addEventListener('touchstart', e => {
       touchStartX = e.touches[0].clientX;

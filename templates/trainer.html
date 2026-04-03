@@ -9,6 +9,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<script src="/static/translations.js"></script>
 <style>
 :root{
   --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a35;
@@ -21,12 +22,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle
 .container{max-width:1200px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
 
 header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:24px;}
-
-.hi{display:flex;align-items:center;gap:14px;}
+.hi{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
 .logo{width:38px;height:38px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .lt h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
 .lt p{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
-.back-btn{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:6px;}
+
+/* ── Language switcher (same style as index) ── */
+.lang-switcher{display:flex;gap:4px;align-items:center;margin-left:auto;}
+.lang-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lang-btn.active{background:rgba(201,168,76,.15);border-color:var(--accent);color:var(--accent);font-weight:600;}
+
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:6px;}
 .back-btn:hover{border-color:var(--accent);color:var(--accent);}
 
 #setup-screen{display:flex;flex-direction:column;align-items:center;gap:24px;padding:40px 0;}
@@ -52,7 +59,6 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .start-btn:hover{background:#6dd48e;transform:translateY(-1px);}
 
 #game-screen{display:none;grid-template-columns:280px 1fr 280px;gap:16px;align-items:start;}
-
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .ph{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 .ph .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
@@ -100,7 +106,6 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .eval-fill{position:absolute;bottom:0;left:0;right:0;background:#f0ede8;transition:height .5s ease;}
 .eval-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);}
 
-/* Chessboard.js overrides */
 #chessboard{width:400px;}
 .board-b72b1{border-radius:6px;border:2px solid var(--border) !important;box-shadow:0 4px 24px rgba(0,0,0,.4);}
 .square-55d63{transition:background .1s;}
@@ -151,8 +156,6 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .pgn-btn{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .pgn-btn.copy{background:var(--accent);color:#0d0d0f;border:none;}
 .pgn-btn.copy:hover{background:var(--accent2);}
-.pgn-btn.analyze{background:transparent;border:1px solid var(--accent);color:var(--accent);}
-.pgn-btn.analyze:hover{background:rgba(201,168,76,.1);}
 .pgn-btn.close{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
 .pgn-btn.close:hover{border-color:var(--red);color:var(--red);}
 
@@ -160,11 +163,13 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:24px;}
+
 @media(max-width:768px){
   .container{padding:0 12px;}
   header{padding:12px 0 10px;margin-bottom:14px;}
   .lt h1{font-size:17px;}
   .lt p{display:none;}
+  .lang-switcher{margin-left:0;}
   #game-screen{display:flex !important;flex-direction:column;gap:12px;}
   .board-area{width:100%;order:1;}
   .panel[style*="height:fit-content"]{order:2;}
@@ -188,46 +193,85 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 }
 </style>
 </head>
-<body>
+<body data-title-key="trainer.pageTitle">
 <div class="container">
+
+<!-- ══ HEADER ══ -->
 <header>
   <div class="hi">
     <div class="logo">🎓</div>
-    <div class="lt"><h1>Chess Trainer</h1><p>Игра с ИИ тренером + Stockfish</p></div>
-    <a href="/" class="back-btn">← Анализатор</a>
+    <div class="lt">
+      <h1 data-key="trainer.siteTitle">Chess Trainer</h1>
+      <p data-key="trainer.siteSubtitle">Игра с ИИ тренером + Stockfish</p>
+    </div>
+    <a href="/" class="back-btn" data-key="trainer.backBtn">← Анализатор</a>
+    <!-- Language switcher -->
+    <div class="lang-switcher">
+      <button class="lang-btn" data-lang="ru" type="button">Рус</button>
+      <button class="lang-btn" data-lang="en" type="button">Eng</button>
+      <button class="lang-btn" data-lang="kk" type="button">Қаз</button>
+    </div>
   </div>
 </header>
 
+<!-- ══ SETUP SCREEN ══ -->
 <div id="setup-screen">
   <div class="setup-card">
-    <h2>⚠️ Новая партия</h2>
+    <h2 data-key="trainer.setupTitle">⚙️ Новая партия</h2>
+
     <div class="setup-section">
-      <label class="setup-label">Ограю</label>
+      <label class="setup-label" data-key="trainer.setupColorLabel">Играю</label>
       <div class="color-row">
-        <div class="color-btn active" id="btn-white" onclick="selectColor('white')"><span class="icon">♔</span><span>Белые</span></div>
-        <div class="color-btn" id="btn-black" onclick="selectColor('black')"><span class="icon">♚</span><span>Чёрные</span></div>
-        <div class="color-btn" id="btn-random" onclick="selectColor('random')"><span class="icon">🎲</span><span>Случайно</span></div>
+        <div class="color-btn active" id="btn-white" onclick="selectColor('white')">
+          <span class="icon">♔</span>
+          <span data-key="trainer.colorWhite">Белые</span>
+        </div>
+        <div class="color-btn" id="btn-black" onclick="selectColor('black')">
+          <span class="icon">♚</span>
+          <span data-key="trainer.colorBlack">Чёрные</span>
+        </div>
+        <div class="color-btn" id="btn-random" onclick="selectColor('random')">
+          <span class="icon">🎲</span>
+          <span data-key="trainer.colorRandom">Случайно</span>
+        </div>
       </div>
     </div>
+
     <div class="setup-section">
-      <label class="setup-label">Уровень</label>
+      <label class="setup-label" data-key="trainer.setupLevelLabel">Уровень</label>
       <div class="level-row">
-        <div class="level-btn novice" id="lv-novice" onclick="selectLevel('novice')"><span class="lv-icon">🌱</span><div class="lv-name">Новичок</div><div class="lv-desc">Skill 3</div></div>
-        <div class="level-btn medium active" id="lv-medium" onclick="selectLevel('medium')"><span class="lv-icon">⚔️</span><div class="lv-name">Средний</div><div class="lv-desc">Skill 10</div></div>
-        <div class="level-btn master" id="lv-master" onclick="selectLevel('master')"><span class="lv-icon">👑</span><div class="lv-name">Мастер</div><div class="lv-desc">Skill 18</div></div>
+        <div class="level-btn novice" id="lv-novice" onclick="selectLevel('novice')">
+          <span class="lv-icon">🌱</span>
+          <div class="lv-name" data-key="trainer.levelNovice">Новичок</div>
+          <div class="lv-desc" data-key="trainer.levelNoviceDesc">Skill 3</div>
+        </div>
+        <div class="level-btn medium active" id="lv-medium" onclick="selectLevel('medium')">
+          <span class="lv-icon">⚔️</span>
+          <div class="lv-name" data-key="trainer.levelMedium">Средний</div>
+          <div class="lv-desc" data-key="trainer.levelMediumDesc">Skill 10</div>
+        </div>
+        <div class="level-btn master" id="lv-master" onclick="selectLevel('master')">
+          <span class="lv-icon">👑</span>
+          <div class="lv-name" data-key="trainer.levelMaster">Мастер</div>
+          <div class="lv-desc" data-key="trainer.levelMasterDesc">Skill 18</div>
+        </div>
       </div>
     </div>
-    <button class="start-btn" onclick="startGame()">🎮 Начать партию</button>
+
+    <button class="start-btn" onclick="startGame()" data-key="trainer.startBtn">🎮 Начать партию</button>
   </div>
 </div>
 
+<!-- ══ GAME SCREEN ══ -->
 <div id="game-screen">
+
+  <!-- LEFT: Trainer chat -->
   <div class="panel" style="height:fit-content;">
     <div class="trainer-head">
       <div class="trainer-avatar">🎓</div>
       <div>
-        <div class="trainer-name" id="trainer-name">Тренер</div>
-        <div class="trainer-title" id="trainer-title">Средний уровень</div>
+        <div class="trainer-name" id="trainer-name" data-key="trainer.trainerName">Тренер</div>
+        <div class="trainer-title" id="trainer-title"></div>
       </div>
       <div class="trainer-status" id="trainer-status"></div>
     </div>
@@ -238,16 +282,24 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
     </div>
   </div>
 
+  <!-- CENTER: Board -->
   <div class="board-area">
     <div class="player-bar" id="bar-top">
       <div class="pb-color" id="top-color-dot"></div>
-      <div class="pb-name" id="top-name">Тренер</div>
-      <div class="pb-label" id="top-label">⚔️ Средний</div>
-      <div class="pb-thinking" id="top-thinking"><div class="spin"></div><span>думает...</span></div>
+      <div class="pb-name" id="top-name" data-key="trainer.trainerName">Тренер</div>
+      <div class="pb-label" id="top-label"></div>
+      <div class="pb-thinking" id="top-thinking">
+        <div class="spin"></div>
+        <span data-key="trainer.thinking">думает...</span>
+      </div>
     </div>
+
     <div class="board-row">
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-        <button id="eval-toggle-btn" onclick="toggleEvalBar()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:10px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;writing-mode:horizontal-tb;">👁 шкала</button>
+        <button id="eval-toggle-btn" onclick="toggleEvalBar()"
+          style="background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:10px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;">
+          <span id="eval-toggle-label" data-key="trainer.evalShow">👁 шкала</span>
+        </button>
         <div class="eval-bar-wrap" id="eval-bar-wrap">
           <div class="eval-label" id="eval-top-lbl"></div>
           <div class="eval-bar"><div class="eval-fill" id="eval-fill" style="height:50%;"></div></div>
@@ -256,104 +308,168 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
       </div>
       <div id="chessboard"></div>
     </div>
+
     <div class="player-bar" id="bar-bottom">
       <div class="pb-color" id="bot-color-dot"></div>
-      <div class="pb-name">Вы</div>
-      <div class="pb-label" id="bot-label">Игрок</div>
+      <div class="pb-name" id="player-label-name">Вы</div>
+      <div class="pb-label" id="bot-label"></div>
     </div>
+
     <div class="ctrl-row">
-      <button class="ctrl-btn draw" onclick="offerDraw()">🤝 Предложить ничью</button>
-      <button class="ctrl-btn resign" onclick="resign()">🏳️ Сдаться</button>
+      <button class="ctrl-btn draw" onclick="offerDraw()" data-key="trainer.offerDraw">🤝 Предложить ничью</button>
+      <button class="ctrl-btn resign" onclick="resign()" data-key="trainer.resign">🏳️ Сдаться</button>
     </div>
   </div>
 
+  <!-- RIGHT: Game info -->
   <div class="game-info">
     <div class="panel">
-      <div class="ph"><div class="dot green"></div><h2>Статус партии</h2></div>
+      <div class="ph"><div class="dot green"></div><h2 data-key="trainer.statusTitle">Статус партии</h2></div>
       <div class="pb">
         <div class="stat-row">
-          <div class="stat-box"><div class="stat-label">ХОД</div><div class="stat-val" id="stat-move">1</div></div>
-          <div class="stat-box"><div class="stat-label">ОЦЕНКА</div><div class="stat-val" id="stat-score">0.00</div></div>
+          <div class="stat-box">
+            <div class="stat-label" data-key="trainer.statMoveLabel">ХОД</div>
+            <div class="stat-val" id="stat-move">1</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label" data-key="trainer.statScoreLabel">ОЦЕНКА</div>
+            <div class="stat-val" id="stat-score">0.00</div>
+          </div>
         </div>
         <div style="margin-top:10px;">
-          <div class="stat-label" style="margin-bottom:6px;">ОЧЕРЕДЬ ХОДА</div>
-          <div style="font-size:13px;font-weight:600;" id="stat-turn">Белые</div>
+          <div class="stat-label" data-key="trainer.statTurnLabel" style="margin-bottom:6px;">ОЧЕРЕДЬ ХОДА</div>
+          <div style="font-size:13px;font-weight:600;" id="stat-turn" data-key="trainer.turnWhite">Белые</div>
         </div>
       </div>
     </div>
+
     <div class="panel">
-      <div class="ph"><div class="dot"></div><h2>Ходы партии</h2></div>
+      <div class="ph"><div class="dot"></div><h2 data-key="trainer.movesTitle">Ходы партии</h2></div>
       <div class="pb" style="padding:8px;"><div class="moves-list" id="moves-list"></div></div>
     </div>
+
     <div class="panel">
-      <div class="ph"><div class="dot"></div><h2>После партии</h2></div>
+      <div class="ph"><div class="dot"></div><h2 data-key="trainer.afterTitle">После партии</h2></div>
       <div class="pb">
-        <button class="ctrl-btn" style="width:100%;border-color:rgba(201,168,76,.4);color:var(--accent);" onclick="showPGN()">📋 Получить PGN</button>
-        <button class="ctrl-btn" style="width:100%;margin-top:8px;" onclick="newGame()">🔄 Ещё партию</button>
+        <button class="ctrl-btn" style="width:100%;border-color:rgba(201,168,76,.4);color:var(--accent);" onclick="showPGN()" data-key="trainer.getPGN">📋 Получить PGN</button>
+        <button class="ctrl-btn" style="width:100%;margin-top:8px;" onclick="newGame()" data-key="trainer.newGame">🔄 Ещё партию</button>
       </div>
     </div>
   </div>
-</div>
 
+</div><!-- /#game-screen -->
+
+<!-- ══ GAME OVER OVERLAY ══ -->
 <div id="gameover-overlay">
   <div class="gameover-card">
     <div class="gameover-icon" id="go-icon">♟</div>
-      <div class="gameover-title" id="go-title">Партия завершена</div>
+    <div class="gameover-title" id="go-title" data-key="trainer.gameoverTitle">Партия завершена</div>
     <div class="gameover-sub" id="go-sub"></div>
     <div class="gameover-btns">
-      <button class="go-btn primary" onclick="showPGN()">📋 Получить PGN партии</button>
-      <button class="go-btn secondary" onclick="newGame()">🔄 Новая партия</button>
+      <button class="go-btn primary" onclick="showPGN()" data-key="trainer.goGetPGN">📋 Получить PGN партии</button>
+      <button class="go-btn secondary" onclick="newGame()" data-key="trainer.goNewGame">🔄 Новая партия</button>
     </div>
   </div>
 </div>
 
+<!-- ══ PGN MODAL ══ -->
 <div id="pgn-modal">
   <div class="pgn-card">
-    <h3>📋 PGN партии</h3>
+    <h3 data-key="trainer.pgnModalTitle">📋 PGN партии</h3>
     <textarea class="pgn-textarea" id="pgn-output" readonly></textarea>
     <div class="pgn-btns">
-      <button class="pgn-btn copy" onclick="copyPGN()">📋 Копировать</button>
-      <button class="pgn-btn close" onclick="closePGNModal()">✕ Закрыть</button>
+      <button class="pgn-btn copy" onclick="copyPGN()" data-key="trainer.pgnCopy">📋 Копировать</button>
+      <button class="pgn-btn close" onclick="closePGNModal()" data-key="trainer.pgnClose">✕ Закрыть</button>
     </div>
   </div>
 </div>
 
 <div id="toast"></div>
-<footer>chess-trainer · stockfish + groq + chessboard.js</footer>
-</div>
+<footer data-key="trainer.footer">chess-trainer · stockfish + groq + chessboard.js</footer>
+</div><!-- /.container -->
 
 <script>
+// ══════════════════════════════════════════════════════
+//  i18n init
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.i18n) {
+    i18n.initI18n();
+    i18n.setupLanguageSwitcher();
+  }
+});
 
-// ── State ──
-let playerColor = 'white';
-let level = 'medium';
-let gameChess = new Chess();
-let board = null;
-let gameActive = false;
-let moveNumber = 1;
-let gameMoves = [];
-let lastFrom = null, lastTo = null;
+// Слушаем смену языка — обновляем динамические тексты в игре
+document.addEventListener('langChanged', function (e) {
+  const lang = e.detail.lang;
+  // Обновляем "Вы" в нижней плашке
+  const playerLabelName = document.getElementById('player-label-name');
+  if (playerLabelName) playerLabelName.textContent = T('trainer.playerYou') || getPlayerYou(lang);
+  // Кнопка шкалы
+  syncEvalToggleLabel();
+  // Очередь хода
+  updateTurnDisplay();
+});
+
+function getPlayerYou(lang) {
+  const map = { ru: 'Вы', en: 'You', kk: 'Сіз' };
+  return map[lang] || 'Вы';
+}
+
+function syncEvalToggleLabel() {
+  const lbl = document.getElementById('eval-toggle-label');
+  if (!lbl) return;
+  lbl.textContent = evalVisible ? T('trainer.evalShow') : T('trainer.evalHidden');
+}
+
+function T(key) { return window.i18n ? window.i18n.t(key) : key; }
+
+// ══════════════════════════════════════════════════════
+//  State
+// ══════════════════════════════════════════════════════
+let playerColor  = 'white';
+let level        = 'medium';
+let gameChess    = new Chess();
+let board        = null;
+let gameActive   = false;
+let moveNumber   = 1;
+let gameMoves    = [];
+let lastFrom     = null, lastTo = null;
 let currentScore = 0;
-let gameResult = '*';
+let gameResult   = '*';
 let selectedSquare = null;
-let evalVisible = true;
-let arrows = [];
+let evalVisible  = true;
+let arrows       = [];
 let drawingArrow = null;
 let justDrewArrow = false;
 let lastMouseButton = 0;
-let currentLanguage = 'ru'; // Отслеживаем последнюю кнопку мыши
 
-const LEVEL_NAMES = { novice:'Новичок 🌱', medium:'Средний ⚔️', master:'Мастер 👑' };
+const LEVEL_SKILL = { novice: 3, medium: 10, master: 18 };
 
-// ── Setup ──
+// ══════════════════════════════════════════════════════
+//  Level names (localised on demand)
+// ══════════════════════════════════════════════════════
+function getLevelName(l) {
+  const icons = { novice: '🌱', medium: '⚔️', master: '👑' };
+  const nameKeys = { novice: 'trainer.levelNovice', medium: 'trainer.levelMedium', master: 'trainer.levelMaster' };
+  return icons[l] + ' ' + T(nameKeys[l]);
+}
+
+// ══════════════════════════════════════════════════════
+//  Setup
+// ══════════════════════════════════════════════════════
 function selectColor(c) {
   playerColor = c;
-  ['white','black','random'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===c));
+  ['white','black','random'].forEach(x =>
+    document.getElementById('btn-'+x).classList.toggle('active', x === c)
+  );
 }
 
 function selectLevel(l) {
   level = l;
-  ['novice','medium','master'].forEach(x => document.getElementById('lv-'+x).classList.toggle('active', x===l));
+  ['novice','medium','master'].forEach(x =>
+    document.getElementById('lv-'+x).classList.toggle('active', x === l)
+  );
 }
 
 function startGame() {
@@ -361,63 +477,62 @@ function startGame() {
   if (chosenColor === 'random') chosenColor = Math.random() < 0.5 ? 'white' : 'black';
   playerColor = chosenColor;
 
-  gameChess = new Chess();
-  gameMoves = [];
-  moveNumber = 1;
-  lastFrom = null; lastTo = null;
-  gameActive = true;
-  gameResult = '*';
+  gameChess    = new Chess();
+  gameMoves    = [];
+  moveNumber   = 1;
+  lastFrom     = null; lastTo = null;
+  gameActive   = true;
+  gameResult   = '*';
   currentScore = 0;
 
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'grid';
+  document.getElementById('setup-screen').style.display     = 'none';
+  document.getElementById('game-screen').style.display      = 'grid';
   document.getElementById('gameover-overlay').style.display = 'none';
 
-  const levelName = LEVEL_NAMES[level];
-  document.getElementById('trainer-name').textContent = 'Тренер';
-  document.getElementById('trainer-title').textContent = levelName;
-
+  const levelName    = getLevelName(level);
   const trainerColor = playerColor === 'white' ? 'black' : 'white';
-  document.getElementById('top-color-dot').className = 'pb-color ' + trainerColor;
-  document.getElementById('top-name').textContent = 'Тренер';
-  document.getElementById('top-label').textContent = levelName;
-  document.getElementById('bot-color-dot').className = 'pb-color ' + playerColor;
-  document.getElementById('bot-label').textContent = playerColor === 'white' ? '♔ Белые' : '♚ Чёрные';
+
+  document.getElementById('trainer-title').textContent       = levelName;
+  document.getElementById('top-color-dot').className         = 'pb-color ' + trainerColor;
+  document.getElementById('top-label').textContent           = levelName;
+  document.getElementById('bot-color-dot').className         = 'pb-color ' + playerColor;
+  document.getElementById('bot-label').textContent           = playerColor === 'white' ? '♔ ' + T('chess.white') : '♚ ' + T('chess.black');
+  document.getElementById('player-label-name').textContent   = getPlayerYou(i18n.getCurrentLang());
 
   initBoard();
   updateStats();
   clearChat();
 
-  addChatMessage("Приветствую! Партия началась. " +
-    (playerColor === 'white' ? "Ты играешь белыми — твой первый ход." :
-     "Ты играешь чёрными — я делаю первый ход."), 'trainer');
+  const greetKey = playerColor === 'white' ? 'trainer.greetWhite' : 'trainer.greetBlack';
+  addChatMessage(T(greetKey), 'trainer');
 
   if (playerColor === 'black') {
     setTimeout(() => trainerMakeMove(''), 800);
   }
 }
 
-// ── Board (chessboard.js) ──
+// ══════════════════════════════════════════════════════
+//  Board
+// ══════════════════════════════════════════════════════
 function initBoard() {
   if (board) board.destroy();
   board = Chessboard('chessboard', {
-    position: 'start',
+    position:    'start',
     orientation: playerColor === 'black' ? 'black' : 'white',
-    pieceTheme: 'https://lichess1.org/assets/piece/cburnett/{piece}.svg',
-    draggable: true,
+    pieceTheme:  'https://lichess1.org/assets/piece/cburnett/{piece}.svg',
+    draggable:   true,
     onDragStart: onDragStart,
-    onDrop: onDrop,
-    onSnapEnd: onSnapEnd
-  });
-  // Добавляем обработку кликов для мобилки
-$('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
-        const sq = $(this).attr('data-square');
-        if (sq) {
-          onSquareClick(sq, e);
-        }
+    onDrop:      onDrop,
+    onSnapEnd:   onSnapEnd
   });
 
-  // Arrows
+  // Click-to-move (mobile)
+  $('#chessboard').find('.square-55d63').off('click').on('click', function () {
+    const sq = $(this).attr('data-square');
+    if (sq) onSquareClick(sq);
+  });
+
+  // Arrows overlay
   const boardEl = document.getElementById('chessboard');
   boardEl.style.position = 'relative';
   let overlay = document.getElementById('arrow-overlay');
@@ -432,62 +547,38 @@ $('#chessboard').find('.square-55d63').off('click').on('click', function(e) {
     overlay.appendChild(svg);
   }
   boardEl.appendChild(overlay);
-  overlay.style.position = 'absolute';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.pointerEvents = 'none';
-  overlay.style.zIndex = '10';
+  Object.assign(overlay.style, { position:'absolute', top:'0', left:'0', width:'100%', height:'100%', pointerEvents:'none', zIndex:'10' });
   const svg = document.getElementById('arrow-svg');
   svg.innerHTML = '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" /></marker></defs>';
- document.getElementById('chessboard').addEventListener('mousedown', function(e) {
-  lastMouseButton = e.button;
-}, true);
+
+  document.getElementById('chessboard').addEventListener('mousedown', e => { lastMouseButton = e.button; }, true);
   $('#chessboard').on('contextmenu', e => e.preventDefault());
   $('#chessboard').on('mousedown', e => {
-    lastMouseButton = e.button; // Сохраняем кнопку мыши
-    if (e.button === 0 && justDrewArrow) {
-      clearArrows();
-      justDrewArrow = false;
-    }
+    lastMouseButton = e.button;
+    if (e.button === 0 && justDrewArrow) { clearArrows(); justDrewArrow = false; }
     if (e.button === 2) {
-      const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow = { from: square };
-      }
+      const sq = getSquareFromCoords(e.clientX, e.clientY);
+      if (sq) drawingArrow = { from: sq };
     }
   });
   $('#chessboard').on('mousemove', e => {
     if (drawingArrow) {
-      const square = getSquareFromCoords(e.clientX, e.clientY);
-      if (square) {
-        drawingArrow.to = square;
-        drawTempArrow(drawingArrow.from, square);
-      }
+      const sq = getSquareFromCoords(e.clientX, e.clientY);
+      if (sq) { drawingArrow.to = sq; drawTempArrow(drawingArrow.from, sq); }
     }
   });
   $('#chessboard').on('mouseup', e => {
     if (drawingArrow && drawingArrow.to && drawingArrow.from !== drawingArrow.to) {
       addArrow(drawingArrow.from, drawingArrow.to);
       justDrewArrow = true;
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault(); e.stopImmediatePropagation();
     }
-    drawingArrow = null;
-    clearTempArrow();
+    drawingArrow = null; clearTempArrow();
   });
 }
 
-function onSquareClick(square, event) {
-  // Если только что нарисовали стрелку, очищаем её и останавливаемся
-  if (justDrewArrow) {
-    clearArrows();
-    justDrewArrow = false;
-    return;
-  }
-  
-  // Игнорируем правый клик
+function onSquareClick(square) {
+  if (justDrewArrow) { clearArrows(); justDrewArrow = false; return; }
   if (lastMouseButton === 2) return;
   if (!gameActive || gameChess.game_over()) return;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
@@ -501,11 +592,9 @@ function onSquareClick(square, event) {
       lastFrom = move.from; lastTo = move.to;
       gameMoves.push(move.san);
       $('.square-55d63').removeClass('highlight-from highlight-to');
-      $('[data-square="' + move.from + '"]').addClass('highlight-from');
-      $('[data-square="' + move.to + '"]').addClass('highlight-to');
-      updateStats();
-      addMoveToList(move.san);
-      board.position(gameChess.fen());
+      $('[data-square="'+move.from+'"]').addClass('highlight-from');
+      $('[data-square="'+move.to+'"]').addClass('highlight-to');
+      updateStats(); addMoveToList(move.san); board.position(gameChess.fen());
       if (gameChess.game_over()) { setTimeout(() => endGame(), 300); return; }
       setTimeout(() => trainerMakeMove(move.san), 600);
       return;
@@ -517,15 +606,12 @@ function onSquareClick(square, event) {
   const piece = gameChess.get(square);
   if (piece && ((playerColor === 'white' && piece.color === 'w') || (playerColor === 'black' && piece.color === 'b'))) {
     selectedSquare = square;
-    $('[data-square="' + square + '"]').addClass('selected-sq');
+    $('[data-square="'+square+'"]').addClass('selected-sq');
   }
 }
 
 function onDragStart(source, piece) {
-  if (lastMouseButton === 2) return false;
-  if (drawingArrow) return false;
-  if (!gameActive) return false;
-  if (gameChess.game_over()) return false;
+  if (lastMouseButton === 2 || drawingArrow || !gameActive || gameChess.game_over()) return false;
   const myTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
   if (!myTurn) return false;
   if (playerColor === 'white' && piece.startsWith('b')) return false;
@@ -534,52 +620,45 @@ function onDragStart(source, piece) {
 
 function onDrop(source, target) {
   if (lastMouseButton === 2) return 'snapback';
-
-  // Remove old highlights
   $('.square-55d63').removeClass('highlight-from highlight-to');
-
   const move = gameChess.move({ from: source, to: target, promotion: 'q' });
   if (!move) return 'snapback';
-
   selectedSquare = null;
   $('.square-55d63').removeClass('selected-sq');
-
   lastFrom = source; lastTo = target;
   gameMoves.push(move.san);
-
-  // Highlight last move
-  $('[data-square="' + source + '"]').addClass('highlight-from');
-  $('[data-square="' + target + '"]').addClass('highlight-to');
-
-  updateStats();
-  addMoveToList(move.san);
-
+  $('[data-square="'+source+'"]').addClass('highlight-from');
+  $('[data-square="'+target+'"]').addClass('highlight-to');
+  updateStats(); addMoveToList(move.san);
   if (gameChess.game_over()) { setTimeout(() => endGame(), 300); return; }
   setTimeout(() => trainerMakeMove(move.san), 600);
 }
-function onSnapEnd() {
-  if (board) board.position(gameChess.fen());
-}
-// ── Trainer move ──
+function onSnapEnd() { if (board) board.position(gameChess.fen()); }
+
+// ══════════════════════════════════════════════════════
+//  Trainer move
+// ══════════════════════════════════════════════════════
 async function trainerMakeMove(playerMoveSan) {
   if (!gameActive) return;
-
   selectedSquare = null;
   $('.square-55d63').removeClass('selected-sq');
-
   setTrainerThinking(true);
 
   try {
+    const lang = window.i18n ? window.i18n.getCurrentLang() : 'ru';
+    const systemPrompt = T('ai.trainerSystemPrompt');
+
     const res = await fetch('/trainer_move', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        fen: gameChess.fen(),
-        player_move: playerMoveSan,
-        level: level,
-        move_number: moveNumber,
-        pgn: gameMoves.join(' '),
-        language: currentLanguage
+        fen:          gameChess.fen(),
+        player_move:  playerMoveSan,
+        level:        level,
+        move_number:  moveNumber,
+        pgn:          gameMoves.join(' '),
+        language:     lang,
+        system_prompt: systemPrompt
       })
     });
     const data = await res.json();
@@ -593,12 +672,11 @@ async function trainerMakeMove(playerMoveSan) {
     moveNumber++;
     currentScore = data.score_after || 0;
 
-    // Update board with highlight
     board.position(gameChess.fen());
     $('.square-55d63').removeClass('highlight-from highlight-to');
     setTimeout(() => {
-      $('[data-square="' + move.from + '"]').addClass('highlight-from');
-      $('[data-square="' + move.to + '"]').addClass('highlight-to');
+      $('[data-square="'+move.from+'"]').addClass('highlight-from');
+      $('[data-square="'+move.to+'"]').addClass('highlight-to');
     }, 150);
 
     updateEvalBar(currentScore);
@@ -610,14 +688,15 @@ async function trainerMakeMove(playerMoveSan) {
     if (data.game_over || gameChess.game_over()) {
       setTimeout(() => endGame(), 800);
     }
-
   } catch(e) {
     setTrainerThinking(false);
-    addChatMessage('Произошла ошибка при обработке хода.', 'system');
+    addChatMessage(T('trainer.errorMove'), 'system');
   }
 }
 
-// ── Game controls ──
+// ══════════════════════════════════════════════════════
+//  Game controls
+// ══════════════════════════════════════════════════════
 async function offerDraw() {
   if (!gameActive) return;
   try {
@@ -628,7 +707,10 @@ async function offerDraw() {
     });
     const data = await res.json();
     addChatMessage(data.message, data.accept ? 'system' : 'trainer');
-    if (data.accept) { gameResult = '1/2-1/2'; setTimeout(() => showGameOver('🤝', 'Ничья', 'Ничья принята'), 600); }
+    if (data.accept) {
+      gameResult = '1/2-1/2';
+      setTimeout(() => showGameOver('🤝', T('trainer.drawTitle'), T('trainer.drawSub')), 600);
+    }
   } catch(e) {}
 }
 
@@ -636,8 +718,8 @@ function resign() {
   if (!gameActive) return;
   gameActive = false;
   gameResult = playerColor === 'white' ? '0-1' : '1-0';
-  addChatMessage('Достойно признавать поражение. Разбери партию и сделай выводы!', 'trainer');
-  setTimeout(() => showGameOver('🏳️', 'Вы сдались', 'Не расстраивайся — проанализируй партию!'), 800);
+  addChatMessage(T('trainer.resignMsg'), 'trainer');
+  setTimeout(() => showGameOver('🏳️', T('trainer.resignTitle'), T('trainer.resignSub')), 800);
 }
 
 function endGame() {
@@ -647,71 +729,78 @@ function endGame() {
     const playerWon = winnerIsWhite === (playerColor === 'white');
     if (playerWon) {
       gameResult = playerColor === 'white' ? '1-0' : '0-1';
-      addChatMessage('Поздравляю — ты победил! Отлично сыграл.', 'trainer');
-      showGameOver('🏆', 'Победа!', 'Отличная игра! Ты поставил мат тренеру.');
+      addChatMessage(T('trainer.winTrainerMsg'), 'trainer');
+      showGameOver('🏆', T('trainer.winTitle'), T('trainer.winSub'));
     } else {
       gameResult = playerColor === 'white' ? '0-1' : '1-0';
-      addChatMessage('Мат! Хорошая попытка — разбери партию.', 'trainer');
-      showGameOver('♟', 'Поражение', 'Тренер поставил тебе мат. Проанализируй партию!');
+      addChatMessage(T('trainer.loseTrainerMsg'), 'trainer');
+      showGameOver('♟', T('trainer.loseTitle'), T('trainer.loseSub'));
     }
   } else if (gameChess.in_stalemate() || gameChess.in_draw()) {
     gameResult = '1/2-1/2';
-    showGameOver('🤝', 'Ничья', 'Партия закончилась вничью.');
+    showGameOver('🤝', T('trainer.drawTitle'), T('trainer.drawSub'));
   }
 }
 
 function showGameOver(icon, title, sub) {
-  document.getElementById('go-icon').textContent = icon;
+  document.getElementById('go-icon').textContent  = icon;
   document.getElementById('go-title').textContent = title;
-  document.getElementById('go-sub').textContent = sub || '';
+  document.getElementById('go-sub').textContent   = sub || '';
   document.getElementById('gameover-overlay').style.display = 'flex';
 }
 
-// ── UI helpers ──
+// ══════════════════════════════════════════════════════
+//  UI helpers
+// ══════════════════════════════════════════════════════
 function setTrainerThinking(thinking) {
-  document.getElementById('top-thinking').style.display = thinking ? 'flex' : 'none';
-  document.getElementById('trainer-status').style.background = thinking ? 'var(--accent)' : 'var(--green)';
-  document.getElementById('trainer-status').style.boxShadow = thinking ? '0 0 6px var(--accent)' : '0 0 6px var(--green)';
+  document.getElementById('top-thinking').style.display       = thinking ? 'flex' : 'none';
+  document.getElementById('trainer-status').style.background  = thinking ? 'var(--accent)' : 'var(--green)';
+  document.getElementById('trainer-status').style.boxShadow   = thinking ? '0 0 6px var(--accent)' : '0 0 6px var(--green)';
 }
 
 function toggleEvalBar() {
   evalVisible = !evalVisible;
   const wrap = document.getElementById('eval-bar-wrap');
-  const btn = document.getElementById('eval-toggle-btn');
+  const btn  = document.getElementById('eval-toggle-btn');
   if (!wrap || !btn) return;
   wrap.style.visibility = evalVisible ? 'visible' : 'hidden';
-  wrap.style.opacity = evalVisible ? '1' : '0';
+  wrap.style.opacity    = evalVisible ? '1' : '0';
   btn.style.borderColor = evalVisible ? 'var(--border)' : 'var(--accent)';
-  btn.style.color = evalVisible ? 'var(--text-muted)' : 'var(--accent)';
-  btn.textContent = evalVisible ? '👁 шкала' : '👁 скрыта';
+  btn.style.color       = evalVisible ? 'var(--text-muted)' : 'var(--accent)';
+  syncEvalToggleLabel();
+}
+
+function updateTurnDisplay() {
+  const turnEl = document.getElementById('stat-turn');
+  if (!turnEl) return;
+  turnEl.textContent = gameChess.turn() === 'w' ? T('trainer.turnWhite') : T('trainer.turnBlack');
 }
 
 function updateStats() {
   document.getElementById('stat-move').textContent = moveNumber;
-  const sc = currentScore / 100;
+  const sc   = currentScore / 100;
   const scEl = document.getElementById('stat-score');
   scEl.textContent = (sc >= 0 ? '+' : '') + sc.toFixed(2);
-  scEl.className = 'stat-val ' + (sc >= 0 ? 'pos' : 'neg');
-  document.getElementById('stat-turn').textContent = gameChess.turn() === 'w' ? 'Белые' : 'Чёрные';
+  scEl.className   = 'stat-val ' + (sc >= 0 ? 'pos' : 'neg');
+  updateTurnDisplay();
   const playerTurn = (gameChess.turn() === 'w') === (playerColor === 'white');
   document.getElementById('bar-bottom').classList.toggle('active-turn', playerTurn);
   document.getElementById('bar-top').classList.toggle('active-turn', !playerTurn);
 }
 
 function updateEvalBar(score) {
-  const fill = document.getElementById('eval-fill');
+  const fill   = document.getElementById('eval-fill');
   const topLbl = document.getElementById('eval-top-lbl');
   const botLbl = document.getElementById('eval-bot-lbl');
   const clamped = Math.max(-1000, Math.min(1000, score));
-  const pct = 50 + (clamped / 1000) * 45;
-  fill.style.height = pct + '%';
+  fill.style.height = (50 + (clamped / 1000) * 45) + '%';
   const display = (score >= 0 ? '+' : '') + (score / 100).toFixed(1);
   if (score >= 0) { topLbl.textContent = ''; botLbl.textContent = display; }
-  else { topLbl.textContent = display; botLbl.textContent = ''; }
+  else            { topLbl.textContent = display; botLbl.textContent = ''; }
 }
 
 function addMoveToList(san) {
-  const list = document.getElementById('moves-list');
+  const list  = document.getElementById('moves-list');
   const total = gameMoves.length;
   const isWhite = total % 2 === 1;
   if (isWhite) {
@@ -721,7 +810,7 @@ function addMoveToList(san) {
     row.innerHTML = `<div class="move-num">${Math.ceil(total/2)}.</div><div class="move-cell latest" id="mc-w-${Math.ceil(total/2)}">${san}</div><div class="move-cell" id="mc-b-${Math.ceil(total/2)}"></div>`;
     list.appendChild(row);
   } else {
-    const idx = Math.ceil(total / 2);
+    const idx  = Math.ceil(total / 2);
     const cell = document.getElementById('mc-b-' + idx);
     if (cell) { cell.textContent = san; cell.classList.add('latest'); }
     const wCell = document.getElementById('mc-w-' + idx);
@@ -733,8 +822,8 @@ function addMoveToList(san) {
 function clearChat() { document.getElementById('chat-box').innerHTML = ''; }
 
 function addChatMessage(text, type = 'trainer') {
-  const box = document.getElementById('chat-box');
-  const msg = document.createElement('div'); msg.className = 'msg';
+  const box    = document.getElementById('chat-box');
+  const msg    = document.createElement('div'); msg.className = 'msg';
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar ' + (type === 'trainer' ? 'trainer' : 'system');
   avatar.textContent = type === 'trainer' ? '🎓' : '♟';
@@ -747,7 +836,9 @@ function addChatMessage(text, type = 'trainer') {
   document.getElementById('typing-indicator').style.display = 'none';
 }
 
-// ── PGN ──
+// ══════════════════════════════════════════════════════
+//  PGN
+// ══════════════════════════════════════════════════════
 async function showPGN() {
   document.getElementById('gameover-overlay').style.display = 'none';
   try {
@@ -767,17 +858,17 @@ async function showPGN() {
 function copyPGN() {
   const ta = document.getElementById('pgn-output');
   ta.select(); document.execCommand('copy');
-  showToast('PGN скопирован!');
+  showToast(T('trainer.pgnCopied'));
 }
 
 function closePGNModal() { document.getElementById('pgn-modal').style.display = 'none'; }
 
 function newGame() {
   document.getElementById('gameover-overlay').style.display = 'none';
-  document.getElementById('pgn-modal').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'none';
-  document.getElementById('setup-screen').style.display = 'flex';
-  gameActive = false;
+  document.getElementById('pgn-modal').style.display        = 'none';
+  document.getElementById('game-screen').style.display      = 'none';
+  document.getElementById('setup-screen').style.display     = 'flex';
+  gameActive     = false;
   selectedSquare = null;
   document.getElementById('moves-list').innerHTML = '';
   if (board) { board.destroy(); board = null; }
@@ -789,81 +880,60 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ── Arrows ──
+// ══════════════════════════════════════════════════════
+//  Arrows
+// ══════════════════════════════════════════════════════
 function getSquareFromCoords(x, y) {
-  const boardEl = document.getElementById('chessboard');
-  const rect = boardEl.getBoundingClientRect();
-  const squareSize = rect.width / 8;
-  const file = Math.floor((x - rect.left) / squareSize);
-  const rank = 7 - Math.floor((y - rect.top) / squareSize);
-  if (file >= 0 && file < 8 && rank >= 0 && rank < 8) {
+  const rect = document.getElementById('chessboard').getBoundingClientRect();
+  const sz   = rect.width / 8;
+  const file = Math.floor((x - rect.left) / sz);
+  const rank = 7 - Math.floor((y - rect.top) / sz);
+  if (file >= 0 && file < 8 && rank >= 0 && rank < 8)
     return String.fromCharCode(97 + file) + (rank + 1);
-  }
   return null;
 }
-
 function getSquareCenter(square) {
   const file = square.charCodeAt(0) - 97;
   const rank = square.charCodeAt(1) - 49;
-  const boardEl = document.getElementById('chessboard');
-  const size = boardEl.offsetWidth / 8;
-  return {
-    x: file * size + size / 2,
-    y: (7 - rank) * size + size / 2
-  };
+  const sz   = document.getElementById('chessboard').offsetWidth / 8;
+  return { x: file * sz + sz / 2, y: (7 - rank) * sz + sz / 2 };
 }
-
 function drawTempArrow(from, to) {
   clearTempArrow();
   const svg = document.getElementById('arrow-svg');
-  const f = getSquareCenter(from);
-  const t = getSquareCenter(to);
+  const f = getSquareCenter(from), t = getSquareCenter(to);
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', f.x);
-  line.setAttribute('y1', f.y);
-  line.setAttribute('x2', t.x);
-  line.setAttribute('y2', t.y);
+  line.setAttribute('x1', f.x); line.setAttribute('y1', f.y);
+  line.setAttribute('x2', t.x); line.setAttribute('y2', t.y);
   line.setAttribute('stroke', 'var(--accent)');
   line.setAttribute('stroke-width', '3');
   line.setAttribute('marker-end', 'url(#arrowhead)');
   line.classList.add('temp-arrow');
   svg.appendChild(line);
 }
-
 function clearTempArrow() {
-  const svg = document.getElementById('arrow-svg');
-  const temp = svg.querySelector('.temp-arrow');
-  if (temp) temp.remove();
+  const el = document.getElementById('arrow-svg').querySelector('.temp-arrow');
+  if (el) el.remove();
 }
-
 function addArrow(from, to) {
   if (from === to) return;
-  arrows.push({ from, to });
-  justDrewArrow = true;
-  drawArrow(from, to);
+  arrows.push({ from, to }); justDrewArrow = true; drawArrow(from, to);
 }
-
 function drawArrow(from, to) {
   const svg = document.getElementById('arrow-svg');
-  const f = getSquareCenter(from);
-  const t = getSquareCenter(to);
+  const f = getSquareCenter(from), t = getSquareCenter(to);
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', f.x);
-  line.setAttribute('y1', f.y);
-  line.setAttribute('x2', t.x);
-  line.setAttribute('y2', t.y);
+  line.setAttribute('x1', f.x); line.setAttribute('y1', f.y);
+  line.setAttribute('x2', t.x); line.setAttribute('y2', t.y);
   line.setAttribute('stroke', 'var(--accent)');
   line.setAttribute('stroke-width', '3');
   line.setAttribute('marker-end', 'url(#arrowhead)');
   line.classList.add('arrow');
   svg.appendChild(line);
 }
-
 function clearArrows() {
   arrows = [];
-  const svg = document.getElementById('arrow-svg');
-  const arrs = svg.querySelectorAll('.arrow');
-  arrs.forEach(a => a.remove());
+  document.getElementById('arrow-svg').querySelectorAll('.arrow').forEach(a => a.remove());
 }
 </script>
 </body>
