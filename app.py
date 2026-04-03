@@ -11,7 +11,7 @@ from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # Configure logging - set to INFO to avoid rate limiting
 logging.basicConfig(level=logging.INFO)
