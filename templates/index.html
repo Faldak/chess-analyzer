@@ -342,7 +342,7 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
           <div class="player"><div class="pc white"></div><div class="pn" id="wname">Белые</div></div>
           <div class="rb" id="rbadge">*</div>
           <div class="player"><div class="pc black"></div><div class="pn" id="bname">Чёрные</div></div>
-        <script src="/templates/translations.js"></script>
+        <script src="templates/translations.js"></script>
         <script>
         // ── Языковой переключатель и инициализация ──
         window.addEventListener('DOMContentLoaded', function() {
@@ -356,12 +356,15 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 // ── Detect mobile ──
 function isMobile(){return window.innerWidth<=768;}
 function showLayout(){
+  const grid = document.querySelector('.grid');
+  const mobileLayout = document.getElementById('mobile-layout');
+  if (!grid || !mobileLayout) return;
   if(isMobile()){
-    document.querySelector('.grid').style.display='none';
-    document.getElementById('mobile-layout').style.display='flex';
+    grid.style.display='none';
+    mobileLayout.style.display='flex';
   } else {
-    document.querySelector('.grid').style.display='grid';
-    document.getElementById('mobile-layout').style.display='none';
+    grid.style.display='grid';
+    mobileLayout.style.display='none';
   }
 }
 showLayout();
