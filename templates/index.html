@@ -260,9 +260,14 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
 <header>
   <div class="hi">
     <div class="logo">♟</div>
-    <div class="lt"><h1>Chess Analyzer</h1><p>ИИ + Stockfish анализ партий</p></div>
+    <div class="lt"><h1 data-key="ui.siteTitle">Chess Analyzer</h1><p>ИИ + Stockfish анализ партий</p></div>
     <a href="/trainer" style="margin-left:auto;margin-right:10px;background:rgba(90,184,122,.12);border:1px solid rgba(90,184,122,.3);color:#5ab87a;font-size:11px;padding:3px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;text-decoration:none;">🎓 Тренер</a>
     <div class="badge">AI + STOCKFISH</div>
+    <div class="lang-switcher" style="margin-left:18px;display:flex;gap:4px;">
+      <button class="lang-btn" data-lang="ru" type="button">Рус</button>
+      <button class="lang-btn" data-lang="en" type="button">Eng</button>
+      <button class="lang-btn" data-lang="kk" type="button">Қаз</button>
+    </div>
   </div>
 </header>
 
@@ -337,139 +342,17 @@ footer{text-align:center;padding:28px 0 20px;color:var(--text-muted);font-size:1
           <div class="player"><div class="pc white"></div><div class="pn" id="wname">Белые</div></div>
           <div class="rb" id="rbadge">*</div>
           <div class="player"><div class="pc black"></div><div class="pn" id="bname">Чёрные</div></div>
-        </div>
-        <div class="accuracy-bar" id="accuracy-bar">
-          <div class="acc-row">
-            <div class="acc-player"><div class="acc-color white"></div><div class="acc-name" id="acc-wname">Белые</div></div>
-            <div class="acc-stats"><div class="acc-val">
-              <div class="acc-accuracy" id="acc-white">—</div>
-              <div class="acc-loss" id="acc-white-loss">—</div>
-            </div></div>
-          </div>
-          <div class="acc-row">
-            <div class="acc-player"><div class="acc-color black"></div><div class="acc-name" id="acc-bname">Чёрные</div></div>
-            <div class="acc-stats"><div class="acc-val">
-              <div class="acc-accuracy" id="acc-black">—</div>
-              <div class="acc-loss" id="acc-black-loss">—</div>
-            </div></div>
-          </div>
-        </div>
-        <div class="moves-grid" id="moves-grid"></div>
-      </div>
-    </div>
-    <div class="panel" id="engine-panel" style="display:none;">
-      <div class="ph"><div class="dot"></div><h2>Анализ движка</h2><span style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="engine-depth-lbl">depth 15</span></div>
-      <div class="pb" style="padding:10px 14px;">
-        <button class="btn btn-outline" id="engine-cancel-btn" style="display:none; margin-bottom: 8px;" onclick="cancelEngineMove()">✕ Отменить ход</button>
-        <div id="engine-lines"></div>
-      </div>
-    </div>
-  </div>
-</div>
+        <script src="/templates/translations.js"></script>
+        <script>
+        // ── Языковой переключатель и инициализация ──
+        window.addEventListener('DOMContentLoaded', function() {
+          if (window.i18n) {
+            i18n.initI18n();
+            i18n.setupLanguageSwitcher();
+          }
+        });
 
-<!-- ═══ MOBILE LAYOUT ═══ -->
-<div class="mobile-layout" id="mobile-layout" style="display:none;">
-
-  <!-- PGN collapsible -->
-  <div class="m-pgn">
-    <div class="m-pgn-hdr" onclick="togglePgn()">
-      <div class="dot"></div>
-      <h2>Партия PGN</h2>
-      <span class="toggle" id="pgn-toggle">▾</span>
-    </div>
-    <div class="m-pgn-body" id="m-pgn-body">
-      <textarea id="m-pgn-input" placeholder="1. e4 e5 2. Nf3 Nc6..."></textarea>
-      <div id="m-err" class="err"></div>
-      <button class="btn" id="m-load-btn" onclick="mLoadGame()"><span id="m-btn-txt">♟ Загрузить</span></button>
-    </div>
-  </div>
-
-  <!-- Top strip: players + accuracy (hidden until game loaded) -->
-  <div class="m-top-strip" id="m-top-strip" style="display:none;">
-    <div class="m-player-side">
-      <div class="m-player-row"><div class="m-pcolor w"></div><div class="m-pname" id="m-wname">Белые</div><div class="m-acc" id="m-wacc"></div></div>
-      <div class="m-player-row"><div class="m-pcolor b"></div><div class="m-pname" id="m-bname">Чёрные</div><div class="m-acc" id="m-bacc"></div></div>
-    </div>
-    <div class="m-result" id="m-result" style="display:none;">*</div>
-  </div>
-
-  <!-- Board -->
-  <div class="m-board-wrap">
-    <div class="m-explore-banner" id="m-explore-banner">Режим исследования — двигай фигуры</div>
-    <div class="m-board-row">
-      <div class="m-eval-bar-wrap" id="m-eval-wrap" style="display:none;">
-        <div class="eval-label" id="m-eval-top"></div>
-        <div class="m-eval-bar" id="m-eval-bar-el"><div class="m-eval-fill" id="m-eval-fill" style="height:50%;"></div></div>
-        <div class="eval-label" id="m-eval-bot">0</div>
-      </div>
-      <div id="m-chessboard" style="flex:1;"></div>
-    </div>
-
-    <!-- Nav -->
-    <div class="m-nav" id="m-nav" style="display:none;">
-      <button class="m-nb" id="m-nb-first" onclick="goTo(0)">⟪</button>
-      <button class="m-nb" id="m-nb-prev" onclick="prev()">‹</button>
-      <div class="m-counter" id="m-counter">0 / 0</div>
-      <button class="m-nb" id="m-nb-next" onclick="next()">›</button>
-      <button class="m-nb" id="m-nb-last" onclick="goTo(allMoves.length)">⟫</button>
-    </div>
-
-    <!-- Mode -->
-    <div class="m-mode" id="m-mode" style="display:none;">
-      <button class="m-mode-btn active" id="m-mode-review" onclick="setMode('review')">Просмотр</button>
-      <button class="m-mode-btn" id="m-mode-explore" onclick="setMode('explore')">Исследование</button>
-    </div>
-  </div>
-
-  <!-- Bottom tabs -->
-  <div class="m-tabs" id="m-tabs" style="display:none;">
-    <div class="m-tab active" onclick="mTab('moves')">Ходы</div>
-    <div class="m-tab" onclick="mTab('engine')">Движок</div>
-    <div class="m-tab" onclick="mTab('ai')">ИИ</div>
-  </div>
-
-  <!-- Tab: Moves -->
-  <div class="m-tab-panel active" id="m-panel-moves">
-    <div class="m-moves-grid" id="m-moves-grid"></div>
-  </div>
-
-  <!-- Tab: Engine -->
-  <div class="m-tab-panel" id="m-panel-engine">
-    <div class="m-engine-inner">
-      <button class="m-cancel-btn" id="m-cancel-btn" onclick="cancelEngineMove()">✕ Отменить ход</button>
-      <div id="m-engine-lines"></div>
-    </div>
-  </div>
-
-  <!-- Tab: AI -->
-  <div class="m-tab-panel" id="m-panel-ai">
-    <div class="m-ai-inner">
-      <div class="ac" id="m-ac" style="border:none;border-radius:0;">
-        <div class="ac-empty" id="m-ac-empty"><span>Загрузи партию</span></div>
-        <div class="ac-hdr" id="m-ac-hdr" style="display:none;"><span>Оценка хода</span></div>
-        <div class="ac-scores" id="m-ac-scores" style="display:none;">
-          <div class="sc-item"><div class="sc-lbl">ДО</div><div class="sc-val" id="m-sc-b">—</div></div>
-          <div class="sc-item"><div class="sc-lbl">ПОСЛЕ</div><div class="sc-val" id="m-sc-a">—</div></div>
-          <div class="sc-item"><div class="sc-lbl">ΔΔ</div><div class="sc-val" id="m-sc-d">—</div></div>
-        </div>
-        <div class="ac-text" id="m-ac-text" style="display:none;"></div>
-      </div>
-    </div>
-    <button class="btn btn-outline m-ai-btn" id="m-analyze-btn" style="display:none;" onclick="analyzeCurrentMove()">🔍 Объяснить ход</button>
-  </div>
-
-  <!-- Chart -->
-  <div class="m-chart-wrap" id="m-chart-wrap" style="display:none;">
-    <div class="m-chart-hdr"><div class="dot"></div><h2>График оценки</h2></div>
-    <div class="m-chart-inner"><canvas id="m-evalChart" height="70"></canvas></div>
-  </div>
-
-</div>
-
-<footer>chess-analyzer · groq + stockfish + chessboard.js · made with ♟</footer>
-</div>
-
-<script>
+        // ...existing code...
 // ── Detect mobile ──
 function isMobile(){return window.innerWidth<=768;}
 function showLayout(){
