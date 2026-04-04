@@ -91,7 +91,7 @@ const translations = {
 
     trainer: {
       pageTitle:       "Chess Trainer — Игра с тренером",
-      siteTitle:       "Chess Trainer",
+      siteTitle:       "Chessov Тренер",
       siteSubtitle:    "Игра с ИИ тренером + Stockfish",
       backBtn:         "← Анализатор",
       setupTitle:      "⚙️ Новая партия",
@@ -268,7 +268,7 @@ const translations = {
 
     trainer: {
       pageTitle:       "Chess Trainer — Play with a Coach",
-      siteTitle:       "Chess Trainer",
+      siteTitle:       "Chessov Trainer",
       siteSubtitle:    "Play vs AI Trainer + Stockfish",
       backBtn:         "← Analyzer",
       setupTitle:      "⚙️ New Game",
@@ -445,7 +445,7 @@ Speak in first person, like a real coach. Always respond in English.`,
 
     trainer: {
       pageTitle:       "Chess Trainer — Жаттықтырушымен ойын",
-      siteTitle:       "Chess Trainer",
+      siteTitle:       "Chessov Тренері",
       siteSubtitle:    "ЖИ жаттықтырушымен ойын + Stockfish",
       backBtn:         "← Анализатор",
       setupTitle:      "⚙️ Жаңа ойын",
