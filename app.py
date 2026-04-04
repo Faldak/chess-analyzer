@@ -521,6 +521,7 @@ def trainer_move():
     data = request.get_json()
     fen = data.get("fen", "")
     player_move = data.get("player_move", "")
+    player_color = data.get("player_color", "white")  # ← берём с фронтенда напрямую
     level = data.get("level", "medium")
     move_number = data.get("move_number", 1)
     language = data.get("language", "ru")
@@ -549,12 +550,12 @@ def trainer_move():
         with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
             engine.configure({"Skill Level": skill})
 
-            # 1. Оценка ДО хода игрока (FEN пришёл именно до player_move)
+            # 1. Оценка ДО хода игрока (FEN пришёл до player_move)
             if player_move:
                 info_pre = engine.analyse(chess.Board(fen), chess.engine.Limit(depth=8), multipv=1)
                 score_pre_player = (info_pre[0] if isinstance(info_pre, list) else info_pre)["score"].white().score(mate_score=10000)
 
-            # 2. Оценка ПОСЛЕ хода игрока = перед ходом тренера (board уже содержит player_move)
+            # 2. Оценка ПОСЛЕ хода игрока = перед ходом тренера
             info_before = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=1)
             score_before = (info_before[0] if isinstance(info_before, list) else info_before)["score"].white().score(mate_score=10000)
 
@@ -577,12 +578,14 @@ def trainer_move():
                 game_over_reason = "insufficient"
 
         # 5. Вычисляем дельту хода игрока
+        # Используем player_color с фронтенда — он не зависит от turn в FEN
         if player_move and score_pre_player is not None and score_before is not None:
-            board_tmp = chess.Board(fen)
-            player_is_white = (board_tmp.turn == chess.WHITE)
+            player_is_white = (player_color == "white")
             if player_is_white:
+                # Белые хотят чтобы оценка (с точки зрения белых) росла
                 player_delta_cp = score_before - score_pre_player
             else:
+                # Чёрные хотят чтобы оценка (с точки зрения белых) падала
                 player_delta_cp = score_pre_player - score_before
 
             if player_delta_cp >= 100:
@@ -641,9 +644,9 @@ def trainer_move():
         reaction_instruction = build_reaction_instruction(player_move_quality, player_delta_cp, language)
 
         level_names = {
-            "ru": {"novice": "начинающий", "medium": "средний",            "master": "продвинутый"},
-            "en": {"novice": "beginner",   "medium": "intermediate",        "master": "advanced"},
-            "kk": {"novice": "жаңадан бастаушы", "medium": "орташа",       "master": "шебер"},
+            "ru": {"novice": "начинающий", "medium": "средний",       "master": "продвинутый"},
+            "en": {"novice": "beginner",   "medium": "intermediate",   "master": "advanced"},
+            "kk": {"novice": "жаңадан бастаушы", "medium": "орташа",  "master": "шебер"},
         }
         level_name = level_names.get(language, level_names["ru"]).get(level, "средний")
 

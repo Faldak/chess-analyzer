@@ -27,7 +27,6 @@ header{padding:18px 0 16px;border-bottom:1px solid var(--border);margin-bottom:2
 .lt h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
 .lt p{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 
-/* ── Language switcher (same style as index) ── */
 .lang-switcher{display:flex;gap:4px;align-items:center;margin-left:auto;}
 .lang-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;}
 .lang-btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -196,7 +195,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 <body data-title-key="trainer.pageTitle">
 <div class="container">
 
-<!-- ══ HEADER ══ -->
 <header>
   <div class="hi">
     <div class="logo">🎓</div>
@@ -205,7 +203,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
       <p data-key="trainer.siteSubtitle">Игра с ИИ тренером + Stockfish</p>
     </div>
     <a href="/" class="back-btn" data-key="trainer.backBtn">← Анализатор</a>
-    <!-- Language switcher -->
     <div class="lang-switcher">
       <button class="lang-btn" data-lang="ru" type="button">Рус</button>
       <button class="lang-btn" data-lang="en" type="button">Eng</button>
@@ -214,11 +211,9 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
   </div>
 </header>
 
-<!-- ══ SETUP SCREEN ══ -->
 <div id="setup-screen">
   <div class="setup-card">
     <h2 data-key="trainer.setupTitle">⚙️ Новая партия</h2>
-
     <div class="setup-section">
       <label class="setup-label" data-key="trainer.setupColorLabel">Играю</label>
       <div class="color-row">
@@ -236,7 +231,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
         </div>
       </div>
     </div>
-
     <div class="setup-section">
       <label class="setup-label" data-key="trainer.setupLevelLabel">Уровень</label>
       <div class="level-row">
@@ -257,15 +251,12 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
         </div>
       </div>
     </div>
-
     <button class="start-btn" onclick="startGame()" data-key="trainer.startBtn">🎮 Начать партию</button>
   </div>
 </div>
 
-<!-- ══ GAME SCREEN ══ -->
 <div id="game-screen">
 
-  <!-- LEFT: Trainer chat -->
   <div class="panel" style="height:fit-content;">
     <div class="trainer-head">
       <div class="trainer-avatar">🎓</div>
@@ -282,7 +273,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
     </div>
   </div>
 
-  <!-- CENTER: Board -->
   <div class="board-area">
     <div class="player-bar" id="bar-top">
       <div class="pb-color" id="top-color-dot"></div>
@@ -321,7 +311,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
     </div>
   </div>
 
-  <!-- RIGHT: Game info -->
   <div class="game-info">
     <div class="panel">
       <div class="ph"><div class="dot green"></div><h2 data-key="trainer.statusTitle">Статус партии</h2></div>
@@ -357,9 +346,8 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
     </div>
   </div>
 
-</div><!-- /#game-screen -->
+</div>
 
-<!-- ══ GAME OVER OVERLAY ══ -->
 <div id="gameover-overlay">
   <div class="gameover-card">
     <div class="gameover-icon" id="go-icon">♟</div>
@@ -372,7 +360,6 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
   </div>
 </div>
 
-<!-- ══ PGN MODAL ══ -->
 <div id="pgn-modal">
   <div class="pgn-card">
     <h3 data-key="trainer.pgnModalTitle">📋 PGN партии</h3>
@@ -386,12 +373,9 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
 
 <div id="toast"></div>
 <footer data-key="trainer.footer">chess-trainer · stockfish + groq + chessboard.js</footer>
-</div><!-- /.container -->
+</div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  i18n init
-// ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function () {
   if (window.i18n) {
     i18n.initI18n();
@@ -399,15 +383,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-// Слушаем смену языка — обновляем динамические тексты в игре
 document.addEventListener('langChanged', function (e) {
   const lang = e.detail.lang;
-  // Обновляем "Вы" в нижней плашке
   const playerLabelName = document.getElementById('player-label-name');
   if (playerLabelName) playerLabelName.textContent = T('trainer.playerYou') || getPlayerYou(lang);
-  // Кнопка шкалы
   syncEvalToggleLabel();
-  // Очередь хода
   updateTurnDisplay();
 });
 
@@ -424,9 +404,7 @@ function syncEvalToggleLabel() {
 
 function T(key) { return window.i18n ? window.i18n.t(key) : key; }
 
-// ══════════════════════════════════════════════════════
-//  State
-// ══════════════════════════════════════════════════════
+// ── State ──
 let playerColor  = 'white';
 let level        = 'medium';
 let gameChess    = new Chess();
@@ -444,20 +422,12 @@ let drawingArrow = null;
 let justDrewArrow = false;
 let lastMouseButton = 0;
 
-const LEVEL_SKILL = { novice: 3, medium: 10, master: 18 };
-
-// ══════════════════════════════════════════════════════
-//  Level names (localised on demand)
-// ══════════════════════════════════════════════════════
 function getLevelName(l) {
   const icons = { novice: '🌱', medium: '⚔️', master: '👑' };
   const nameKeys = { novice: 'trainer.levelNovice', medium: 'trainer.levelMedium', master: 'trainer.levelMaster' };
   return icons[l] + ' ' + T(nameKeys[l]);
 }
 
-// ══════════════════════════════════════════════════════
-//  Setup
-// ══════════════════════════════════════════════════════
 function selectColor(c) {
   playerColor = c;
   ['white','black','random'].forEach(x =>
@@ -511,9 +481,6 @@ function startGame() {
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  Board
-// ══════════════════════════════════════════════════════
 function initBoard() {
   if (board) board.destroy();
   board = Chessboard('chessboard', {
@@ -526,13 +493,11 @@ function initBoard() {
     onSnapEnd:   onSnapEnd
   });
 
-  // Click-to-move (mobile)
   $('#chessboard').find('.square-55d63').off('click').on('click', function () {
     const sq = $(this).attr('data-square');
     if (sq) onSquareClick(sq);
   });
 
-  // Arrows overlay
   const boardEl = document.getElementById('chessboard');
   boardEl.style.position = 'relative';
   let overlay = document.getElementById('arrow-overlay');
@@ -635,9 +600,7 @@ function onDrop(source, target) {
 }
 function onSnapEnd() { if (board) board.position(gameChess.fen()); }
 
-// ══════════════════════════════════════════════════════
-//  Trainer move
-// ══════════════════════════════════════════════════════
+// ── Trainer move ──
 async function trainerMakeMove(playerMoveSan) {
   if (!gameActive) return;
   selectedSquare = null;
@@ -646,7 +609,6 @@ async function trainerMakeMove(playerMoveSan) {
 
   try {
     const lang = window.i18n ? window.i18n.getCurrentLang() : 'ru';
-    const systemPrompt = T('ai.trainerSystemPrompt');
 
     const res = await fetch('/trainer_move', {
       method: 'POST',
@@ -654,11 +616,11 @@ async function trainerMakeMove(playerMoveSan) {
       body: JSON.stringify({
         fen:          gameChess.fen(),
         player_move:  playerMoveSan,
+        player_color: playerColor,   // ← передаём цвет игрока на сервер
         level:        level,
         move_number:  moveNumber,
         pgn:          gameMoves.join(' '),
-        language:     lang,
-        system_prompt: systemPrompt
+        language:     lang
       })
     });
     const data = await res.json();
@@ -694,9 +656,7 @@ async function trainerMakeMove(playerMoveSan) {
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  Game controls
-// ══════════════════════════════════════════════════════
+// ── Game controls ──
 async function offerDraw() {
   if (!gameActive) return;
   try {
@@ -749,9 +709,7 @@ function showGameOver(icon, title, sub) {
   document.getElementById('gameover-overlay').style.display = 'flex';
 }
 
-// ══════════════════════════════════════════════════════
-//  UI helpers
-// ══════════════════════════════════════════════════════
+// ── UI helpers ──
 function setTrainerThinking(thinking) {
   document.getElementById('top-thinking').style.display       = thinking ? 'flex' : 'none';
   document.getElementById('trainer-status').style.background  = thinking ? 'var(--accent)' : 'var(--green)';
@@ -836,9 +794,7 @@ function addChatMessage(text, type = 'trainer') {
   document.getElementById('typing-indicator').style.display = 'none';
 }
 
-// ══════════════════════════════════════════════════════
-//  PGN
-// ══════════════════════════════════════════════════════
+// ── PGN ──
 async function showPGN() {
   document.getElementById('gameover-overlay').style.display = 'none';
   try {
@@ -880,9 +836,7 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ══════════════════════════════════════════════════════
-//  Arrows
-// ══════════════════════════════════════════════════════
+// ── Arrows ──
 function getSquareFromCoords(x, y) {
   const rect = document.getElementById('chessboard').getBoundingClientRect();
   const sz   = rect.width / 8;
