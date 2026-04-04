@@ -373,7 +373,7 @@ footer{text-align:center;padding:24px 0 18px;color:var(--text-muted);font-size:1
         <div class="stat-row">
           <div class="stat-box">
             <div class="stat-label" data-key="trainer.statMoveLabel">ХОД</div>
-            <div class="stat-val" id="stat-move">0</div>
+            <div class="stat-val" id="stat-move">1</div>
           </div>
           <div class="stat-box">
             <div class="stat-label" data-key="trainer.statScoreLabel">ОЦЕНКА</div>
@@ -528,7 +528,7 @@ function startGame() {
 
   gameChess    = new Chess();
   gameMoves    = [];
-  moveNumber   = 1;
+  moveNumber   = 0;
   lastFrom     = null; lastTo = null;
   gameActive   = true;
   gameResult   = '*';
@@ -814,7 +814,7 @@ function updateTurnDisplay() {
 }
 
 function updateStats() {
-  document.getElementById('stat-move').textContent = moveNumber;
+  document.getElementById('stat-move').textContent = Math.floor(gameMoves.length / 2) + 1;
   const sc   = currentScore / 100;
   const scEl = document.getElementById('stat-score');
   scEl.textContent = (sc >= 0 ? '+' : '') + sc.toFixed(2);
