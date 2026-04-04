@@ -6,9 +6,9 @@ const translations = {
   // ════════════════════════════════════════════════════════
   ru: {
     ui: {
-      siteTitle:      "Шахматный Анализатор",
+      siteTitle:      "Chessov анализатор",
       trainer:        "🎓 Тренер",
-      badge:          "AI + STOCKFISH",
+      badge:          "ИИ + STOCKFISH = АНАЛИЗ",
       pgnTitle:       "Партия PGN",
       pgnLabel:       "// Вставь PGN партии",
       pgnPlaceholder: "1. e4 e5 2. Nf3 Nc6...",
@@ -186,9 +186,9 @@ const translations = {
   // ════════════════════════════════════════════════════════
   en: {
     ui: {
-      siteTitle:      "Chess Analyzer",
+      siteTitle:      "Chessov Analyzer",
       trainer:        "🎓 Trainer",
-      badge:          "AI + STOCKFISH",
+      badge:          "AI + STOCKFISH = ANALYSIS",
       pgnTitle:       "Game PGN",
       pgnLabel:       "// Paste game PGN",
       pgnPlaceholder: "1. e4 e5 2. Nf3 Nc6...",
@@ -363,9 +363,9 @@ Speak in first person, like a real coach. Always respond in English.`,
   // ════════════════════════════════════════════════════════
   kk: {
     ui: {
-      siteTitle:      "Шахмат Анализаторы",
+      siteTitle:      "Chessov талдаушысы",
       trainer:        "🎓 Жаттықтырушы",
-      badge:          "AI + STOCKFISH",
+      badge:          "ЖИ + STOCKFISH = АНАЛИЗ",
       pgnTitle:       "Ойын PGN",
       pgnLabel:       "// PGN қойыңыз",
       pgnPlaceholder: "1. e4 e5 2. Nf3 Nc6...",
