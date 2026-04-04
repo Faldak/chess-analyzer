@@ -144,7 +144,7 @@ def annotate():
                                 except:
                                     best_move = None
 
-                    player_move = moves_san[i]
+                    player_move_san = moves_san[i]
                     eval_before = scores[i]
 
                     sac = is_sacrifice(board2, mv, scores[i], None)
@@ -181,7 +181,7 @@ def annotate():
 
                     is_white_move = (i % 2 == 0)
                     accuracy_score, classification = classify_move_accuracy(
-                        player_move, best_move, eval_before, eval_after, is_white_move
+                        player_move_san, best_move, eval_before, eval_after, is_white_move
                     )
 
                     if is_white_move:
@@ -222,10 +222,8 @@ def analyze_move():
     custom_move = data.get("move", None)
     language = data.get("language", "ru")
 
-    # ── Получаем переведённые лейблы с фронтенда ──
     lbl = data.get("prompt_labels", {})
 
-    # Заголовки разделов
     L_GAME_CHAR    = lbl.get("gameChar",    "🏁 Характер партии:")
     L_KEY_MOMENT   = lbl.get("keyMoment",   "📍 Ключевой момент:")
     L_WHITE_ERR    = lbl.get("whiteErrors", "❌ Ошибки белых:")
@@ -242,14 +240,12 @@ def analyze_move():
     L_ALT_PLAN     = lbl.get("altPlan",     "♟ Альтернативный план:")
     L_AVOID        = lbl.get("avoid",       "⚠️ Чего избегать:")
 
-    # Цвета
     L_WHITE        = lbl.get("colorWhite",  "Белые")
     L_BLACK        = lbl.get("colorBlack",  "Чёрные")
     L_BETTER       = lbl.get("better",      "лучше")
     L_ALSO_GOOD    = lbl.get("alsoGood",    "тоже хорош")
     L_CP           = lbl.get("cpChange",    "сантипешек")
 
-    # Описания инструкций
     L_GAME_CHAR_D   = lbl.get("gameCharDesc",    "Открытая/закрытая, тактическая/позиционная, дебют? объясни 1 предложением.")
     L_KEY_MOM_D     = lbl.get("keyMomentDesc",   "Самый важный ход или позиция — где решилась партия? объясни 1 предложением.")
     L_WHITE_ERR_D   = lbl.get("whiteErrDesc",    "Главные ошибки и почему они проигрышны. объясни 1 предложением.")
@@ -295,7 +291,6 @@ def analyze_move():
 
             return score_before, score_after, top_moves
 
-        # ── Режим исследования ──
         if custom_fen:
             board = chess.Board(custom_fen)
             is_white = board.turn == chess.WHITE
@@ -361,7 +356,6 @@ def analyze_move():
 **{L_AVOID}**
 {L_AVOID_D}"""
 
-        # ── Режим просмотра партии ──
         else:
             game = chess.pgn.read_game(io.StringIO(pgn_text))
             moves_san = []
@@ -387,7 +381,6 @@ def analyze_move():
                     if i == move_index:
                         break
                     board2.push(mv)
-                fen_before = board2.fen()
 
                 sb, sa, top_moves = None, None, []
                 if sf_path:
@@ -428,7 +421,6 @@ def analyze_move():
 {L_LESSON_D}"""
 
             else:
-                # Общий анализ партии
                 moves_str = " ".join([f"{i//2+1}.{m}" if i%2==0 else m for i,m in enumerate(moves_san)])
                 prompt = f"""{white} vs {black} | {result}
 {moves_str}
@@ -448,14 +440,13 @@ def analyze_move():
 **{L_CONCLUSION}**
 {L_CONCLUSION_D}"""
 
-        # Краткое резюме
         def get_quality_label(diff):
             if diff is None: return "—"
             if diff <= -300: return "?? Blunder" if language == "en" else ("?? Өрескел қате" if language == "kk" else "?? Грубая ошибка")
-            if diff <= -100: return "? Mistake"  if language == "en" else ("? Қате"         if language == "kk" else "? Ошибка")
-            if diff <= -50:  return "?! Inaccuracy" if language == "en" else ("?! Дәлсіздік" if language == "kk" else "?! Неточность")
+            if diff <= -100: return "? Mistake"  if language == "en" else ("? Қате"          if language == "kk" else "? Ошибка")
+            if diff <= -50:  return "?! Inaccuracy" if language == "en" else ("?! Дәлсіздік"  if language == "kk" else "?! Неточность")
             if diff >= 200:  return "!! Brilliant" if language == "en" else ("!! Тамаша жүріс" if language == "kk" else "!! Блестящий ход")
-            if diff >= 50:   return "! Good"     if language == "en" else ("! Жақсы жүріс"   if language == "kk" else "! Хороший ход")
+            if diff >= 50:   return "! Good"      if language == "en" else ("! Жақсы жүріс"   if language == "kk" else "! Хороший ход")
             if diff >= 20:   return "!? Interesting" if language == "en" else ("!? Қызықты жүріс" if language == "kk" else "!? Интересный ход")
             return "=" if language == "en" else ("= Бейтарап" if language == "kk" else "= Нейтральный")
 
@@ -478,7 +469,6 @@ def analyze_move():
         sa_s = f"{summary_sa/100:+.2f}" if summary_sa is not None else "?"
         summary = f"{sb_s} → {sa_s}  ·  {quality}"
 
-        # Языковая инструкция в конец промпта
         lang_instruction = ""
         if language == "en":
             lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
@@ -495,6 +485,8 @@ def analyze_move():
         })
 
     except Exception as e:
+        logger.error(f"Error in /analyze_move: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 @app.route("/analyze_position", methods=["POST"])
@@ -531,7 +523,6 @@ def trainer_move():
     player_move = data.get("player_move", "")
     level = data.get("level", "medium")
     move_number = data.get("move_number", 1)
-    game_pgn = data.get("pgn", "")
     language = data.get("language", "ru")
 
     skill_map = {"novice": 3, "medium": 10, "master": 18}
@@ -545,23 +536,39 @@ def trainer_move():
         if not sf_path:
             return jsonify({"error": "Stockfish не найден"}), 500
 
+        player_delta_cp = 0
+        player_move_quality = "neutral"
+        score_pre_player = None
+        score_before = None
+        score_after = None
+        trainer_san = None
+        trainer_mv = None
+        game_over = False
+        game_over_reason = ""
+
         with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
             engine.configure({"Skill Level": skill})
 
-            info_before = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=1)
-            score_before = info_before[0]["score"].white().score(mate_score=10000) if isinstance(info_before, list) else info_before["score"].white().score(mate_score=10000)
+            # 1. Оценка ДО хода игрока (FEN пришёл именно до player_move)
+            if player_move:
+                info_pre = engine.analyse(chess.Board(fen), chess.engine.Limit(depth=8), multipv=1)
+                score_pre_player = (info_pre[0] if isinstance(info_pre, list) else info_pre)["score"].white().score(mate_score=10000)
 
+            # 2. Оценка ПОСЛЕ хода игрока = перед ходом тренера (board уже содержит player_move)
+            info_before = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=1)
+            score_before = (info_before[0] if isinstance(info_before, list) else info_before)["score"].white().score(mate_score=10000)
+
+            # 3. Ход тренера
             result = engine.play(board, chess.engine.Limit(depth=depth))
             trainer_mv = result.move
             trainer_san = board.san(trainer_mv)
-
             board.push(trainer_mv)
 
+            # 4. Оценка после хода тренера
             info_after = engine.analyse(board, chess.engine.Limit(depth=8), multipv=1)
-            score_after = info_after[0]["score"].white().score(mate_score=10000) if isinstance(info_after, list) else info_after["score"].white().score(mate_score=10000)
+            score_after = (info_after[0] if isinstance(info_after, list) else info_after)["score"].white().score(mate_score=10000)
 
             game_over = board.is_game_over()
-            game_over_reason = ""
             if board.is_checkmate():
                 game_over_reason = "checkmate"
             elif board.is_stalemate():
@@ -569,153 +576,129 @@ def trainer_move():
             elif board.is_insufficient_material():
                 game_over_reason = "insufficient"
 
-        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        # 5. Вычисляем дельту хода игрока
+        if player_move and score_pre_player is not None and score_before is not None:
+            board_tmp = chess.Board(fen)
+            player_is_white = (board_tmp.turn == chess.WHITE)
+            if player_is_white:
+                player_delta_cp = score_before - score_pre_player
+            else:
+                player_delta_cp = score_pre_player - score_before
 
-        level_names = {
-            "ru": {"novice": "начинающий", "medium": "средний",       "master": "продвинутый"},
-            "en": {"novice": "beginner",   "medium": "intermediate",   "master": "advanced"},
-            "kk": {"novice": "жаңадан бастаушы", "medium": "орташа",  "master": "шебер"},
-        }
-        level_name = level_names.get(language, level_names["ru"]).get(level, "средний")
+            if player_delta_cp >= 100:
+                player_move_quality = "brilliant"
+            elif player_delta_cp >= 50:
+                player_move_quality = "great"
+            elif player_delta_cp >= 0:
+                player_move_quality = "good"
+            elif player_delta_cp >= -70:
+                player_move_quality = "inaccuracy"
+            elif player_delta_cp >= -150:
+                player_move_quality = "mistake"
+            elif player_delta_cp >= -300:
+                player_move_quality = "blunder"
+            else:
+                player_move_quality = "huge_blunder"
 
-        # ── Вычисляем дельту хода ИГРОКА ──────────────────────────────────
-        # score_before = оценка ДО хода игрока (т.е. до player_move)
-        # score_after  = оценка ПОСЛЕ хода тренера
-        # Нам нужна оценка сразу после хода игрока — это score_before (уже после player_move, до trainer_move)
-        # Пересчитываем: score_before здесь это оценка перед ходом тренера = после хода игрока
-        player_delta_cp = 0
-        player_move_quality = "neutral"
-
-        if player_move and score_before is not None:
-            # score_before — оценка позиции после хода игрока, до хода тренера
-            # Нам нужна оценка ДО хода игрока. Получим её из FEN (текущий FEN — это позиция до хода игрока)
-            try:
-                board_before_player = chess.Board(fen)
-                with chess.engine.SimpleEngine.popen_uci(sf_path) as engine2:
-                    info_pre = engine2.analyse(board_before_player, chess.engine.Limit(depth=8), multipv=1)
-                    score_pre_player = (info_pre[0] if isinstance(info_pre, list) else info_pre)["score"].white().score(mate_score=10000)
-
-                if score_pre_player is not None and score_before is not None:
-                    # Дельта с точки зрения игрока (положительная = улучшил позицию)
-                    player_is_white = (board_before_player.turn == chess.WHITE)
-                    if player_is_white:
-                        player_delta_cp = score_before - score_pre_player   # белые хотят +
-                    else:
-                        player_delta_cp = score_pre_player - score_before   # чёрные хотят –
-
-                    # Категория хода
-                    if player_delta_cp >= 100:
-                        player_move_quality = "brilliant"
-                    elif player_delta_cp >= 50:
-                        player_move_quality = "great"
-                    elif player_delta_cp >= 0:
-                        player_move_quality = "good"
-                    elif player_delta_cp >= -70:
-                        player_move_quality = "inaccuracy"
-                    elif player_delta_cp >= -150:
-                        player_move_quality = "mistake"
-                    elif player_delta_cp >= -300:
-                        player_move_quality = "blunder"
-                    else:
-                        player_move_quality = "huge_blunder"
-            except Exception:
-                pass
-
-        # ── Строим инструкцию для AI на основе качества хода ──────────────
+        # 6. Инструкция для AI по качеству хода
         def build_reaction_instruction(quality, delta, lang):
             delta_pawns = abs(delta / 100)
-
             if lang == "en":
-                if quality == "brilliant":
-                    return f"The student just played a BRILLIANT move (gained +{delta_pawns:.1f} pawns). React with genuine excitement and detailed praise — explain exactly WHY it's so good."
-                elif quality == "great":
-                    return f"The student played a very strong move (+{delta_pawns:.1f}). Give warm, specific praise — what idea did they execute well?"
-                elif quality == "good":
-                    return f"The student played a solid move. A brief nod of approval is fine — then focus on the position ahead."
-                elif quality == "inaccuracy":
-                    return f"The student made a slight inaccuracy (lost -{delta_pawns:.1f} pawns). Gently point it out — explain what would have been better, no harsh tone."
-                elif quality == "mistake":
-                    return f"The student made a real mistake (lost -{delta_pawns:.1f} pawns). Be clearly critical but constructive — name the specific problem and what they should have played."
-                elif quality == "blunder":
-                    return f"The student BLUNDERED badly (lost -{delta_pawns:.1f} pawns). React with clear frustration — this is a serious error. Tell them directly and firmly what they missed."
-                elif quality == "huge_blunder":
-                    return f"The student made a CATASTROPHIC blunder (lost -{delta_pawns:.1f} pawns). React harshly — this is completely unacceptable at any level. Don't soften it."
-                else:
-                    return "The student's last move was neutral. Comment on your reply move and the position."
-
+                reactions = {
+                    "brilliant":    f"Student played BRILLIANTLY (+{delta_pawns:.1f} pawns). Open with genuine excitement, then explain your reply.",
+                    "great":        f"Student played very well (+{delta_pawns:.1f}). Give warm specific praise, then explain your reply.",
+                    "good":         "Student played solidly. Brief approval, then explain your reply.",
+                    "inaccuracy":   f"Student was slightly inaccurate (-{delta_pawns:.1f} pawns). Gently point it out and explain your reply.",
+                    "mistake":      f"Student made a real mistake (-{delta_pawns:.1f} pawns). Be clearly critical, name the problem, then explain your reply.",
+                    "blunder":      f"Student BLUNDERED (-{delta_pawns:.1f} pawns). React with clear frustration, tell them what they missed, then explain your reply.",
+                    "huge_blunder": f"Student made a CATASTROPHIC blunder (-{delta_pawns:.1f} pawns). React harshly — unacceptable. Then explain your reply.",
+                    "neutral":      "Neutral move. Explain your reply and comment on the position.",
+                }
             elif lang == "kk":
-                if quality == "brilliant":
-                    return f"Оқушы ТАМАША жүріс жасады (+{delta_pawns:.1f} пешка). Шынайы қуанышпен мақта — неліктен бұл жүріс тамаша екенін нақты түсіндір."
-                elif quality == "great":
-                    return f"Оқушы өте күшті жүріс жасады (+{delta_pawns:.1f}). Жылы, нақты мадақта — қандай идеяны жақсы орындады?"
-                elif quality == "good":
-                    return f"Оқушы қалыпты жүріс жасады. Қысқаша мақұлдауға болады — содан кейін алдағы позицияға назар аудар."
-                elif quality == "inaccuracy":
-                    return f"Оқушы шамалы дәлсіздік жіберді (-{delta_pawns:.1f} пешка). Жұмсақ ескерт — не жақсырақ болатынын түсіндір, қатаң болма."
-                elif quality == "mistake":
-                    return f"Оқушы нақты қате жіберді (-{delta_pawns:.1f} пешка). Анық сынай — нақты мәселені атап, не ойнауы керек еді."
-                elif quality == "blunder":
-                    return f"Оқушы НАШАР зевок жіберді (-{delta_pawns:.1f} пешка). Ашық наразылықпен жауап бер — бұл ауыр қате. Нені жіберіп алды — тікелей айт."
-                elif quality == "huge_blunder":
-                    return f"Оқушы АПАТТЫ зевок жіберді (-{delta_pawns:.1f} пешка). Қатаң жауап бер — бұл мүлдем жол берілмейді. Жұмсартпа."
-                else:
-                    return "Соңғы жүріс бейтарап болды. Өз жүрісің мен позиция туралы түсіндір."
-
+                reactions = {
+                    "brilliant":    f"Оқушы ТАМАША ойнады (+{delta_pawns:.1f} пешка). Шынайы қуанышпен бастап, өз жүрісіңді түсіндір.",
+                    "great":        f"Оқушы өте жақсы ойнады (+{delta_pawns:.1f}). Жылы мадақтап, өз жүрісіңді түсіндір.",
+                    "good":         "Оқушы қалыпты ойнады. Қысқаша мақұлдап, өз жүрісіңді түсіндір.",
+                    "inaccuracy":   f"Шамалы дәлсіздік (-{delta_pawns:.1f} пешка). Жұмсақ ескертіп, өз жүрісіңді түсіндір.",
+                    "mistake":      f"Нақты қате (-{delta_pawns:.1f} пешка). Анық сынап, мәселені атап, өз жүрісіңді түсіндір.",
+                    "blunder":      f"ЗЕВОК жіберді (-{delta_pawns:.1f} пешка). Ашық наразылықпен нені жіберді — айтып, өз жүрісіңді түсіндір.",
+                    "huge_blunder": f"АПАТТЫ зевок (-{delta_pawns:.1f} пешка). Қатаң жауап бер — жол берілмейді. Өз жүрісіңді түсіндір.",
+                    "neutral":      "Бейтарап жүріс. Өз жүрісің мен позиция туралы түсіндір.",
+                }
             else:  # ru
-                if quality == "brilliant":
-                    return f"Ученик только что сделал БЛЕСТЯЩИЙ ход (выиграл +{delta_pawns:.1f} пешки). Отреагируй с искренним восхищением — объясни КОНКРЕТНО, почему это так хорошо."
-                elif quality == "great":
-                    return f"Ученик сделал очень сильный ход (+{delta_pawns:.1f}). Горячо и конкретно похвали — какую идею он хорошо реализовал?"
-                elif quality == "good":
-                    return f"Ученик сделал нормальный ход. Кратко одобри и переходи к позиции впереди."
-                elif quality == "inaccuracy":
-                    return f"Ученик допустил небольшую неточность (потерял -{delta_pawns:.1f} пешки). Мягко укажи на это — объясни что было бы лучше, без грубости."
-                elif quality == "mistake":
-                    return f"Ученик допустил настоящую ошибку (потерял -{delta_pawns:.1f} пешки). Критикуй чётко и конструктивно — назови конкретную проблему и что надо было сыграть."
-                elif quality == "blunder":
-                    return f"Ученик ЗЕВНУЛ (-{delta_pawns:.1f} пешки). Отреагируй с явным недовольством — это серьёзная ошибка. Скажи прямо и жёстко что он упустил."
-                elif quality == "huge_blunder":
-                    return f"Ученик сделал КАТАСТРОФИЧЕСКИЙ зевок (-{delta_pawns:.1f} пешки). Отреагируй жёстко — это совершенно недопустимо. Не смягчай."
-                else:
-                    return "Последний ход был нейтральным. Прокомментируй свой ответный ход и позицию."
+                reactions = {
+                    "brilliant":    f"Ученик сыграл БЛЕСТЯЩЕ (+{delta_pawns:.1f} пешки). Начни с искреннего восхищения, затем объясни свой ход.",
+                    "great":        f"Ученик сыграл очень хорошо (+{delta_pawns:.1f}). Горячо похвали конкретно, затем объясни свой ход.",
+                    "good":         "Ученик сыграл нормально. Кратко одобри, затем объясни свой ход.",
+                    "inaccuracy":   f"Небольшая неточность (-{delta_pawns:.1f} пешки). Мягко укажи на ошибку, затем объясни свой ход.",
+                    "mistake":      f"Настоящая ошибка (-{delta_pawns:.1f} пешки). Чётко раскритикуй и назови проблему, затем объясни свой ход.",
+                    "blunder":      f"ЗЕВОК (-{delta_pawns:.1f} пешки). С явным недовольством скажи что упустил, затем объясни свой ход.",
+                    "huge_blunder": f"КАТАСТРОФИЧЕСКИЙ зевок (-{delta_pawns:.1f} пешки). Жёсткая реакция — недопустимо. Затем объясни свой ход.",
+                    "neutral":      "Нейтральный ход. Объясни свой ответный ход и прокомментируй позицию.",
+                }
+            return reactions.get(quality, reactions["neutral"])
 
         reaction_instruction = build_reaction_instruction(player_move_quality, player_delta_cp, language)
 
+        level_names = {
+            "ru": {"novice": "начинающий", "medium": "средний",            "master": "продвинутый"},
+            "en": {"novice": "beginner",   "medium": "intermediate",        "master": "advanced"},
+            "kk": {"novice": "жаңадан бастаушы", "medium": "орташа",       "master": "шебер"},
+        }
+        level_name = level_names.get(language, level_names["ru"]).get(level, "средний")
+
         player_block = ""
         if player_move:
-            player_block = f"\nPlayer move: {player_move}" if language == "en" else (
-                f"\nОқушының жүрісі: {player_move}" if language == "kk" else
-                f"\nИгрок только что сделал ход: {player_move}"
-            )
+            if language == "en":
+                player_block = f"\nStudent's move: {player_move}"
+            elif language == "kk":
+                player_block = f"\nОқушының жүрісі: {player_move}"
+            else:
+                player_block = f"\nХод игрока: {player_move}"
 
-        prompt = f"""Chess trainer vs student ({level_name}).
-Move #{move_number}. FEN before player: {fen}{player_block}
-Player move quality: {player_move_quality} ({player_delta_cp:+d} centipawns)
-Trainer reply: {trainer_san}
-Position eval after: {score_after/100 if score_after else 0:.2f}
-
-INSTRUCTION: {reaction_instruction}
-
-Write 2-3 sentences IN FIRST PERSON as a real coach. Speak naturally, not like a computer.
-{'Explain your reply move briefly after reacting to the student.' if player_move else 'Explain your opening move.'}
-No markdown."""
-
-        lang_instruction = ""
         if language == "en":
+            length_rule = "STRICT LIMIT: exactly 2-3 short sentences total. No more."
             lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
         elif language == "kk":
+            length_rule = "ҚАТАҢ ШЕКТЕУ: барлығы 2-3 қысқа сөйлем. Артық жазба."
             lang_instruction = "\n\nМАЦЫЗДЫ: Жауапты ТЕК қазақша беріңіз."
         else:
+            length_rule = "ЖЁСТКОЕ ОГРАНИЧЕНИЕ: ровно 2-3 коротких предложения. Не больше."
             lang_instruction = "\n\nВАЖНО: Отвечай ТОЛЬКО на русском языке."
 
+        prompt = f"""Шахматный тренер ({level_name}) против ученика.
+Ход #{move_number}.{player_block}
+Качество хода игрока: {player_move_quality} ({player_delta_cp:+d} сантипешек)
+Ответный ход тренера: {trainer_san}
+Оценка после хода тренера: {score_after/100 if score_after else 0:.2f}
+
+ЗАДАЧА: {reaction_instruction}
+
+ФОРМАТ: {length_rule}
+Говори от первого лица как живой тренер. Никакого markdown."""
+
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt + lang_instruction}],
             model="llama-3.3-70b-versatile",
-            max_tokens=200,
+            max_tokens=120,
         )
         comment = chat.choices[0].message.content.strip()
 
+        return jsonify({
+            "trainer_move": trainer_san,
+            "trainer_move_uci": trainer_mv.uci(),
+            "fen_after": board.fen(),
+            "score_before": score_before,
+            "score_after": score_after,
+            "comment": comment,
+            "game_over": game_over,
+            "game_over_reason": game_over_reason,
+        })
+
     except Exception as e:
+        logger.error(f"Error in /trainer_move: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 
@@ -737,7 +720,9 @@ def trainer_draw():
 
         with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
             info = engine.analyse(board, chess.engine.Limit(time=0.3))
-            score = info["score"].white().score(mate_score=10000) if not isinstance(info, list) else info[0]["score"].white().score(mate_score=10000)
+            score = (info["score"].white().score(mate_score=10000)
+                     if not isinstance(info, list)
+                     else info[0]["score"].white().score(mate_score=10000))
 
         accept = score is not None and abs(score) <= 80
 
@@ -750,6 +735,8 @@ def trainer_draw():
         return jsonify({"accept": accept, "score": score, "message": message})
 
     except Exception as e:
+        logger.error(f"Error in /trainer_draw: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 
@@ -782,7 +769,10 @@ def trainer_pgn():
         return jsonify({"pgn": pgn_str})
 
     except Exception as e:
+        logger.error(f"Error in /trainer_pgn: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
