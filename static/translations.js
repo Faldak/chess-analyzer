@@ -6,7 +6,6 @@ const translations = {
   // ════════════════════════════════════════════════════════
   ru: {
     ui: {
-      // index.html
       siteTitle:      "Шахматный Анализатор",
       trainer:        "🎓 Тренер",
       badge:          "AI + STOCKFISH",
@@ -45,14 +44,56 @@ const translations = {
       language:       "Язык",
     },
 
+    prompts: {
+      // Заголовки разделов для промптов ИИ
+      gameChar:       "🏁 Характер партии:",
+      keyMoment:      "📍 Ключевой момент:",
+      whiteErrors:    "❌ Ошибки белых:",
+      blackErrors:    "❌ Ошибки чёрных:",
+      conclusion:     "🏆 Вывод:",
+      moveIdea:       "🎯 Идея хода",
+      moveQuality:    "📊 Качество хода:",
+      tactics:        "♟ Тактика и план:",
+      bestAlt:        "⚡ Лучшая альтернатива:",
+      lesson:         "💡 Урок:",
+      lessonFull:     "💡 Урок из этого момента:",
+      posEval:        "📍 Оценка позиции:",
+      bestPlan:       "🎯 Лучший план для",
+      altPlan:        "♟ Альтернативный план:",
+      avoid:          "⚠️ Чего избегать:",
+      // Контекстные строки
+      colorWhite:     "Белые",
+      colorBlack:     "Чёрные",
+      better:         "лучше",
+      alsoGood:       "тоже хорош",
+      cpChange:       "сантипешек",
+      // Описания для промптов
+      gameCharDesc:   "Открытая/закрытая, тактическая/позиционная, дебют? объясни 1 предложением.",
+      keyMomentDesc:  "Самый важный ход или позиция — где решилась партия? объясни 1 предложением.",
+      whiteErrDesc:   "Главные ошибки и почему они проигрышны. объясни 1 предложением.",
+      blackErrDesc:   "Главные ошибки и почему они проигрышны. объясни 1 предложением.",
+      conclusionDesc: "Почему выиграл победитель — тактика, стратегия, ошибки соперника? объясни 1 предложением.",
+      moveIdeaDesc:   "Что делает этот ход — атака, защита, тактика, развитие, захват пространства? объясни кратко.",
+      moveQualDesc:   "На основе изменения оценки определи категорию и объясни. Если это ошибка — почему игрок мог её допустить? объясни 1 предложением.",
+      tacticsDesc:    "Какие угрозы создаёт или нейтрализует этот ход? Как он влияет на дальнейшую игру? объясни 2 предложениями.",
+      bestAltDesc:    "что конкретно он давал лучшего? объясни 1 предложением.",
+      lessonDesc:     "Один практический вывод для игрока — что нужно помнить в похожих позициях? объясни 1 предложением.",
+      posEvalDesc:    "Кто стоит лучше, почему — материал, король, пешечная структура, активность фигур? объясни 2 предложениями.",
+      bestPlanDesc:   "Объясни идею хода — что он даёт, какую угрозу создаёт или проблему решает? объясни 1 предложением.",
+      altPlanDesc:    "Коротко объясни идею.",
+      avoidDesc:      "Какие ходы были бы ошибкой и почему? объясни 1 предложением.",
+      moveIdeaExpDesc:"Объясни что делает этот ход 2 предложениями — атака, защита, развитие фигуры, захват пространства, тактика?",
+      moveQualExpDesc:"На основе изменения оценки Stockfish определи категорию (отличный ход / хороший / неточность / ошибка / грубая ошибка) и объясни почему 1-2 предложениями.",
+      tacticsExpDesc: "Какие угрозы создаёт или снимает этот ход? Какой план он открывает или закрывает? объясни 1 предложением.",
+      bestAltExpDesc: "какую конкретную идею он реализует? объясни 2 предложениями.",
+      lessonExpDesc:  "Один практический совет — что нужно помнить в похожих позициях? объясни 2 предложениями.",
+    },
+
     trainer: {
-      // Заголовок страницы
       pageTitle:       "Chess Trainer — Игра с тренером",
-      // Header
       siteTitle:       "Chess Trainer",
       siteSubtitle:    "Игра с ИИ тренером + Stockfish",
       backBtn:         "← Анализатор",
-      // Setup screen
       setupTitle:      "⚙️ Новая партия",
       setupColorLabel: "Играю",
       colorWhite:      "Белые",
@@ -66,45 +107,33 @@ const translations = {
       levelMaster:     "Мастер",
       levelMasterDesc: "Skill 18",
       startBtn:        "🎮 Начать партию",
-      // Trainer panel
       trainerName:     "Тренер",
-      // Player bars
       thinking:        "думает...",
-      // Controls
       offerDraw:       "🤝 Предложить ничью",
       resign:          "🏳️ Сдаться",
-      // Game info panel
       statusTitle:     "Статус партии",
       statMoveLabel:   "ХОД",
       statScoreLabel:  "ОЦЕНКА",
       statTurnLabel:   "ОЧЕРЕДЬ ХОДА",
       turnWhite:       "Белые",
       turnBlack:       "Чёрные",
-      // Moves panel
       movesTitle:      "Ходы партии",
-      // After game panel
       afterTitle:      "После партии",
       getPGN:          "📋 Получить PGN",
       newGame:         "🔄 Ещё партию",
-      // Eval toggle
       evalShow:        "👁 шкала",
       evalHidden:      "👁 скрыта",
-      // Game over overlay
       gameoverTitle:   "Партия завершена",
       goGetPGN:        "📋 Получить PGN партии",
       goNewGame:       "🔄 Новая партия",
-      // PGN modal
       pgnModalTitle:   "📋 PGN партии",
       pgnCopy:         "📋 Копировать",
       pgnClose:        "✕ Закрыть",
-      // Toast
       pgnCopied:       "PGN скопирован!",
-      // Chat messages
       greetWhite:      "Приветствую! Партия началась. Ты играешь белыми — твой первый ход.",
       greetBlack:      "Приветствую! Партия началась. Ты играешь чёрными — я делаю первый ход.",
       errorMove:       "Произошла ошибка при обработке хода.",
       resignMsg:       "Достойно признавать поражение. Разбери партию и сделай выводы!",
-      // Gameover messages
       winTitle:        "Победа!",
       winSub:          "Отличная игра! Ты поставил мат тренеру.",
       winTrainerMsg:   "Поздравляю — ты победил! Отлично сыграл.",
@@ -115,7 +144,6 @@ const translations = {
       drawSub:         "Партия закончилась вничью.",
       resignTitle:     "Вы сдались",
       resignSub:       "Не расстраивайся — проанализируй партию!",
-      // Footer
       footer:          "chess-trainer · stockfish + groq + chessboard.js",
     },
 
@@ -194,6 +222,48 @@ const translations = {
       chartTitle:     "Chart",
       pasteError:     "Paste a PGN first",
       language:       "Language",
+    },
+
+    prompts: {
+      gameChar:       "🏁 Game character:",
+      keyMoment:      "📍 Key moment:",
+      whiteErrors:    "❌ White's mistakes:",
+      blackErrors:    "❌ Black's mistakes:",
+      conclusion:     "🏆 Conclusion:",
+      moveIdea:       "🎯 Move idea",
+      moveQuality:    "📊 Move quality:",
+      tactics:        "♟ Tactics and plan:",
+      bestAlt:        "⚡ Best alternative:",
+      lesson:         "💡 Lesson:",
+      lessonFull:     "💡 Lesson from this moment:",
+      posEval:        "📍 Position evaluation:",
+      bestPlan:       "🎯 Best plan for",
+      altPlan:        "♟ Alternative plan:",
+      avoid:          "⚠️ What to avoid:",
+      colorWhite:     "White",
+      colorBlack:     "Black",
+      better:         "better",
+      alsoGood:       "also good",
+      cpChange:       "centipawns",
+      gameCharDesc:   "Open/closed, tactical/positional, opening? Explain in 1 sentence.",
+      keyMomentDesc:  "The most important move or position — where was the game decided? Explain in 1 sentence.",
+      whiteErrDesc:   "Main mistakes and why they are losing. Explain in 1 sentence.",
+      blackErrDesc:   "Main mistakes and why they are losing. Explain in 1 sentence.",
+      conclusionDesc: "Why did the winner win — tactics, strategy, opponent's mistakes? Explain in 1 sentence.",
+      moveIdeaDesc:   "What does this move do — attack, defense, tactics, development, space grab? Explain briefly.",
+      moveQualDesc:   "Based on the eval change, identify the category and explain. If it's a mistake — why might the player have made it? Explain in 1 sentence.",
+      tacticsDesc:    "What threats does this move create or neutralize? How does it affect the game going forward? Explain in 2 sentences.",
+      bestAltDesc:    "what specific idea does it implement better? Explain in 1 sentence.",
+      lessonDesc:     "One practical takeaway for the player — what to remember in similar positions? Explain in 1 sentence.",
+      posEvalDesc:    "Who stands better and why — material, king safety, pawn structure, piece activity? Explain in 2 sentences.",
+      bestPlanDesc:   "Explain the idea of the move — what does it give, what threat does it create or problem does it solve? Explain in 1 sentence.",
+      altPlanDesc:    "Briefly explain the idea.",
+      avoidDesc:      "What moves would be mistakes and why? Explain in 1 sentence.",
+      moveIdeaExpDesc:"Explain what this move does in 2 sentences — attack, defense, piece development, space grab, tactics?",
+      moveQualExpDesc:"Based on Stockfish eval change, identify the category (brilliant/good/inaccuracy/mistake/blunder) and explain why in 1-2 sentences.",
+      tacticsExpDesc: "What threats does this move create or eliminate? What plan does it open or close? Explain in 1 sentence.",
+      bestAltExpDesc: "what specific idea does it implement? Explain in 2 sentences.",
+      lessonExpDesc:  "One practical tip — what to remember in similar positions? Explain in 2 sentences.",
     },
 
     trainer: {
@@ -331,6 +401,48 @@ Speak in first person, like a real coach. Always respond in English.`,
       language:       "Тіл",
     },
 
+    prompts: {
+      gameChar:       "🏁 Ойын сипаты:",
+      keyMoment:      "📍 Негізгі сәт:",
+      whiteErrors:    "❌ Ақтың қателері:",
+      blackErrors:    "❌ Қараның қателері:",
+      conclusion:     "🏆 Қорытынды:",
+      moveIdea:       "🎯 Жүріс идеясы",
+      moveQuality:    "📊 Жүріс сапасы:",
+      tactics:        "♟ Тактика және жоспар:",
+      bestAlt:        "⚡ Ең жақсы балама:",
+      lesson:         "💡 Сабақ:",
+      lessonFull:     "💡 Осы сәттен алынған сабақ:",
+      posEval:        "📍 Позиция бағасы:",
+      bestPlan:       "🎯 Үздік жоспар",
+      altPlan:        "♟ Балама жоспар:",
+      avoid:          "⚠️ Нені болдырмау керек:",
+      colorWhite:     "Ақ",
+      colorBlack:     "Қара",
+      better:         "жақсырақ",
+      alsoGood:       "да жақсы",
+      cpChange:       "сантипешка",
+      gameCharDesc:   "Ашық/жабық, тактикалық/позициялық, дебют? 1 сөйлеммен түсіндіріңіз.",
+      keyMomentDesc:  "Ең маңызды жүріс немесе позиция — ойын қайда шешілді? 1 сөйлеммен түсіндіріңіз.",
+      whiteErrDesc:   "Негізгі қателер және неліктен олар жеңіліске әкеледі. 1 сөйлеммен түсіндіріңіз.",
+      blackErrDesc:   "Негізгі қателер және неліктен олар жеңіліске әкеледі. 1 сөйлеммен түсіндіріңіз.",
+      conclusionDesc: "Неліктен жеңімпаз жеңді — тактика, стратегия, қарсыластың қателері? 1 сөйлеммен түсіндіріңіз.",
+      moveIdeaDesc:   "Бұл жүріс не істейді — шабуыл, қорғаныс, тактика, дамыту, кеңістік? қысқаша түсіндіріңіз.",
+      moveQualDesc:   "Баға өзгерісіне сүйеніп санатты анықтаңыз және түсіндіріңіз. Қате болса — ойыншы неге жіберді? 1 сөйлеммен.",
+      tacticsDesc:    "Бұл жүріс қандай қауіп туғызады немесе жояды? Ойынға қалай әсер етеді? 2 сөйлеммен түсіндіріңіз.",
+      bestAltDesc:    "ол қандай нақты идеяны жүзеге асырады? 1 сөйлеммен түсіндіріңіз.",
+      lessonDesc:     "Ойыншыға бір практикалық қорытынды — ұқсас позицияларда не есте сақтау керек? 1 сөйлеммен.",
+      posEvalDesc:    "Кім жақсы тұр және неліктен — материал, король, пешка құрылымы, фигуралар белсенділігі? 2 сөйлеммен.",
+      bestPlanDesc:   "Жүріс идеясын түсіндіріңіз — ол не береді, қандай қауіп туғызады? 1 сөйлеммен.",
+      altPlanDesc:    "Идеяны қысқаша түсіндіріңіз.",
+      avoidDesc:      "Қандай жүрістер қате болар еді және неліктен? 1 сөйлеммен.",
+      moveIdeaExpDesc:"Бұл жүріс не істейтінін 2 сөйлеммен түсіндіріңіз — шабуыл, қорғаныс, фигура дамыту, кеңістік алу, тактика?",
+      moveQualExpDesc:"Stockfish баға өзгерісіне сүйеніп санатты анықтаңыз (тамаша/жақсы/дәлсіздік/қате/зевок) және неліктен 1-2 сөйлеммен түсіндіріңіз.",
+      tacticsExpDesc: "Бұл жүріс қандай қауіп туғызады немесе жояды? Ол қандай жоспарды ашады немесе жабады? 1 сөйлеммен.",
+      bestAltExpDesc: "ол қандай нақты идеяны жүзеге асырады? 2 сөйлеммен түсіндіріңіз.",
+      lessonExpDesc:  "Бір практикалық кеңес — ұқсас позицияларда не есте сақтау керек? 2 сөйлеммен.",
+    },
+
     trainer: {
       pageTitle:       "Chess Trainer — Жаттықтырушымен ойын",
       siteTitle:       "Chess Trainer",
@@ -428,10 +540,6 @@ Speak in first person, like a real coach. Always respond in English.`,
 //  УТИЛИТЫ — общие для обеих страниц
 // ════════════════════════════════════════════════════════
 
-/**
- * Получить перевод по ключу вида "namespace.key" или "key"
- * Пространства: ui, trainer, chess, ai
- */
 function t(key, lang) {
   lang = lang || getCurrentLang();
   const keys = key.split('.');
@@ -449,14 +557,9 @@ function setLanguage(lang) {
   document.querySelectorAll('.lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang)
   );
-  // Уведомляем страницу об изменении языка (для trainer.html)
   document.dispatchEvent(new CustomEvent('langChanged', { detail: { lang } }));
 }
 
-/**
- * Обходит все элементы с data-key и data-key-placeholder и подставляет перевод.
- * Работает для обеих страниц: ищет ключи вида "ui.loadBtn", "trainer.startBtn" и т.д.
- */
 function updateTranslations(lang) {
   document.querySelectorAll('[data-key]').forEach(el => {
     const key = el.getAttribute('data-key');
@@ -468,7 +571,6 @@ function updateTranslations(lang) {
     const val = t(key, lang);
     if (val !== key) el.placeholder = val;
   });
-  // Заголовок вкладки браузера
   const titleKey = document.body.dataset.titleKey;
   if (titleKey) document.title = t(titleKey, lang);
 }
@@ -487,5 +589,4 @@ function setupLanguageSwitcher() {
   });
 }
 
-// Глобальный экспорт
 window.i18n = { t, getCurrentLang, setLanguage, updateTranslations, initI18n, setupLanguageSwitcher };

@@ -13,10 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__, static_folder='static')
 
-# Configure logging - set to INFO to avoid rate limiting
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-# Disable verbose chess engine logging
 logging.getLogger('chess.engine').setLevel(logging.WARNING)
 
 def get_sf():
@@ -29,7 +27,6 @@ def get_sf():
     return None
 
 def get_annotation(diff, is_sacrifice):
-    """Return annotation symbol based on centipawn difference."""
     if diff <= -300:
         return "??"
     elif diff <= -100:
@@ -47,7 +44,6 @@ def get_annotation(diff, is_sacrifice):
     return ""
 
 def is_sacrifice(board_before, move, score_before, score_after):
-    """Check if move sacrifices material (gives up piece for positional/tactical gain)."""
     captured = board_before.piece_at(move.to_square)
     if captured is None:
         return False
@@ -59,39 +55,21 @@ def is_sacrifice(board_before, move, score_before, score_after):
     return moving_val > captured_val and score_after is not None and score_before is not None
 
 def classify_move_accuracy(player_move, best_move, eval_before, eval_after, is_white):
-    """
-    Классифицирует точность хода на основе сравнения с best move и оценок.
-    
-    Возвращает кортеж: (accuracy_score, classification_text)
-    Где accuracy_score: 100, 75, 50, 25, 0
-    """
     if not best_move:
         return 100, "Неизвестно"
-    
-    # Сравниваем ход с best move
     is_best_move = (player_move == best_move)
-    
-    # Вычисляем потерю оценки
     if eval_before is None or eval_after is None:
         return 100, "Неизвестно"
-    
     eval_loss = eval_after - eval_before if is_white else eval_before - eval_after
-    
-    # Классификация по потере оценки
     if is_best_move or eval_loss >= 0:
-        # Точный ход - best move или не ухудшил позицию
         return 100, "Точно"
     elif -50 <= eval_loss < 0:
-        # Незначительная ошибка (до 50 пешек)
         return 75, "Хорошо"
     elif -200 <= eval_loss < -50:
-        # Средняя ошибка (50-200 пешек)
         return 50, "Нормально"
     elif -500 <= eval_loss < -200:
-        # Крупная ошибка (200-500 пешек)
         return 25, "Слабо"
     else:
-        # Проигрышная ошибка (> 500 пешек)
         return 0, "Ошибка"
 
 @app.route("/")
@@ -100,7 +78,6 @@ def index():
 
 @app.route("/annotate", methods=["POST"])
 def annotate():
-    """Analyze full game and return per-move annotations + accuracy scores."""
     data = request.get_json()
     pgn_text = data.get("pgn", "").strip()
     if not pgn_text:
@@ -124,7 +101,7 @@ def annotate():
         sf_path = get_sf()
         annotations = [""] * len(moves_san)
         scores = [None] * (len(moves_san) + 1)
-        top_moves = [[] for _ in range(len(moves_san) + 1)]  # Initialize as lists, not None
+        top_moves = [[] for _ in range(len(moves_san) + 1)]
         white_accuracy = 0
         black_accuracy = 0
 
@@ -132,9 +109,8 @@ def annotate():
             board2 = game.board()
             white_accuracies = []
             black_accuracies = []
-            
+
             with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
-                # Evaluate initial position
                 info = engine.analyse(board2, chess.engine.Limit(time=0.05), multipv=2)
                 if isinstance(info, list):
                     scores[0] = info[0]["score"].white().score(mate_score=10000)
@@ -150,7 +126,6 @@ def annotate():
                     top_moves[0] = []
 
                 for i, mv in enumerate(move_objects):
-                    # Get best move BEFORE this move
                     info_before = engine.analyse(board2, chess.engine.Limit(time=0.05), multipv=2)
                     best_move = None
                     if info_before:
@@ -168,11 +143,10 @@ def annotate():
                                     best_move = board2.san(chess.Move.from_uci(str(move_uci)))
                                 except:
                                     best_move = None
-                    
+
                     player_move = moves_san[i]
                     eval_before = scores[i]
-                    
-                    # Push move and get new evaluation
+
                     sac = is_sacrifice(board2, mv, scores[i], None)
                     board2.push(mv)
 
@@ -199,28 +173,24 @@ def annotate():
                         top_moves[i+1] = []
 
                     eval_after = scores[i+1]
-                    
-                    # Старая аннотация
+
                     if scores[i] is not None and scores[i+1] is not None:
                         is_white_move = (i % 2 == 0)
                         diff = scores[i+1] - scores[i] if is_white_move else scores[i] - scores[i+1]
                         annotations[i] = get_annotation(diff, sac)
-                    
-                    # Новая классификация точности
+
                     is_white_move = (i % 2 == 0)
                     accuracy_score, classification = classify_move_accuracy(
                         player_move, best_move, eval_before, eval_after, is_white_move
                     )
-                    
+
                     if is_white_move:
                         white_accuracies.append(accuracy_score)
                     else:
                         black_accuracies.append(accuracy_score)
-            
-            # Вычисляем среднюю точность для каждого игрока
+
             white_accuracy = round(sum(white_accuracies) / len(white_accuracies), 1) if white_accuracies else 0
             black_accuracy = round(sum(black_accuracies) / len(black_accuracies), 1) if black_accuracies else 0
-
 
         return jsonify({
             "moves": moves_san,
@@ -239,10 +209,9 @@ def annotate():
         logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
-# Serve favicon
 @app.route("/favicon.ico")
 def favicon():
-    return "", 204  # Return 204 No Content for favicon
+    return "", 204
 
 @app.route("/analyze_move", methods=["POST"])
 def analyze_move():
@@ -251,14 +220,61 @@ def analyze_move():
     move_index = data.get("move_index", None)
     custom_fen = data.get("fen", None)
     custom_move = data.get("move", None)
-    language = data.get("language", "ru")  # языковой параметр
+    language = data.get("language", "ru")
+
+    # ── Получаем переведённые лейблы с фронтенда ──
+    lbl = data.get("prompt_labels", {})
+
+    # Заголовки разделов
+    L_GAME_CHAR    = lbl.get("gameChar",    "🏁 Характер партии:")
+    L_KEY_MOMENT   = lbl.get("keyMoment",   "📍 Ключевой момент:")
+    L_WHITE_ERR    = lbl.get("whiteErrors", "❌ Ошибки белых:")
+    L_BLACK_ERR    = lbl.get("blackErrors", "❌ Ошибки чёрных:")
+    L_CONCLUSION   = lbl.get("conclusion",  "🏆 Вывод:")
+    L_MOVE_IDEA    = lbl.get("moveIdea",    "🎯 Идея хода")
+    L_MOVE_QUAL    = lbl.get("moveQuality", "📊 Качество хода:")
+    L_TACTICS      = lbl.get("tactics",     "♟ Тактика и план:")
+    L_BEST_ALT     = lbl.get("bestAlt",     "⚡ Лучшая альтернатива:")
+    L_LESSON       = lbl.get("lesson",      "💡 Урок:")
+    L_LESSON_FULL  = lbl.get("lessonFull",  "💡 Урок из этого момента:")
+    L_POS_EVAL     = lbl.get("posEval",     "📍 Оценка позиции:")
+    L_BEST_PLAN    = lbl.get("bestPlan",    "🎯 Лучший план для")
+    L_ALT_PLAN     = lbl.get("altPlan",     "♟ Альтернативный план:")
+    L_AVOID        = lbl.get("avoid",       "⚠️ Чего избегать:")
+
+    # Цвета
+    L_WHITE        = lbl.get("colorWhite",  "Белые")
+    L_BLACK        = lbl.get("colorBlack",  "Чёрные")
+    L_BETTER       = lbl.get("better",      "лучше")
+    L_ALSO_GOOD    = lbl.get("alsoGood",    "тоже хорош")
+    L_CP           = lbl.get("cpChange",    "сантипешек")
+
+    # Описания инструкций
+    L_GAME_CHAR_D   = lbl.get("gameCharDesc",    "Открытая/закрытая, тактическая/позиционная, дебют? объясни 1 предложением.")
+    L_KEY_MOM_D     = lbl.get("keyMomentDesc",   "Самый важный ход или позиция — где решилась партия? объясни 1 предложением.")
+    L_WHITE_ERR_D   = lbl.get("whiteErrDesc",    "Главные ошибки и почему они проигрышны. объясни 1 предложением.")
+    L_BLACK_ERR_D   = lbl.get("blackErrDesc",    "Главные ошибки и почему они проигрышны. объясни 1 предложением.")
+    L_CONCLUSION_D  = lbl.get("conclusionDesc",  "Почему выиграл победитель — тактика, стратегия, ошибки соперника? объясни 1 предложением.")
+    L_MOVE_IDEA_D   = lbl.get("moveIdeaDesc",    "Что делает этот ход — атака, защита, тактика, развитие, захват пространства? объясни кратко.")
+    L_MOVE_QUAL_D   = lbl.get("moveQualDesc",    "На основе изменения оценки определи категорию и объясни. Если это ошибка — почему игрок мог её допустить? объясни 1 предложением.")
+    L_TACTICS_D     = lbl.get("tacticsDesc",     "Какие угрозы создаёт или нейтрализует этот ход? Как он влияет на дальнейшую игру? объясни 2 предложениями.")
+    L_BEST_ALT_D    = lbl.get("bestAltDesc",     "что конкретно он давал лучшего? объясни 1 предложением.")
+    L_LESSON_D      = lbl.get("lessonDesc",      "Один практический вывод для игрока — что нужно помнить в похожих позициях? объясни 1 предложением.")
+    L_POS_EVAL_D    = lbl.get("posEvalDesc",     "Кто стоит лучше, почему — материал, король, пешечная структура, активность фигур? объясни 2 предложениями.")
+    L_BEST_PLAN_D   = lbl.get("bestPlanDesc",    "Объясни идею хода — что он даёт, какую угрозу создаёт или проблему решает? объясни 1 предложением.")
+    L_ALT_PLAN_D    = lbl.get("altPlanDesc",     "Коротко объясни идею.")
+    L_AVOID_D       = lbl.get("avoidDesc",       "Какие ходы были бы ошибкой и почему? объясни 1 предложением.")
+    L_MOVE_IDEA_EXP = lbl.get("moveIdeaExpDesc", "Объясни что делает этот ход 2 предложениями — атака, защита, развитие фигуры, захват пространства, тактика?")
+    L_MOVE_QUAL_EXP = lbl.get("moveQualExpDesc", "На основе изменения оценки Stockfish определи категорию (отличный ход / хороший / неточность / ошибка / грубая ошибка) и объясни почему 1-2 предложениями.")
+    L_TACTICS_EXP   = lbl.get("tacticsExpDesc",  "Какие угрозы создаёт или снимает этот ход? Какой план он открывает или закрывает? объясни 1 предложением.")
+    L_BEST_ALT_EXP  = lbl.get("bestAltExpDesc",  "какую конкретную идею он реализует? объясни 2 предложениями.")
+    L_LESSON_EXP    = lbl.get("lessonExpDesc",   "Один практический совет — что нужно помнить в похожих позициях? объясни 2 предложениями.")
 
     try:
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         sf_path = get_sf()
 
         def get_sf_data(board, move_obj=None, engine=None):
-            """Получает данные Stockfish для позиции и хода."""
             info_before = engine.analyse(board, chess.engine.Limit(time=0.3), multipv=3)
             score_before = info_before[0]["score"].white().score(mate_score=10000)
 
@@ -283,7 +299,7 @@ def analyze_move():
         if custom_fen:
             board = chess.Board(custom_fen)
             is_white = board.turn == chess.WHITE
-            color_name = "Белые" if is_white else "Чёрные"
+            color_name = L_WHITE if is_white else L_BLACK
 
             sb, sa, top_moves = None, None, []
             if sf_path:
@@ -305,64 +321,45 @@ def analyze_move():
             diff = None
             if sb is not None and sa is not None:
                 diff = (sa - sb) if is_white else (sb - sa)
-            diff_fmt = f"{diff:+d} сантипешек" if diff is not None else "?"
+            diff_fmt = f"{diff:+d} {L_CP}" if diff is not None else "?"
+
+            alt_quality = L_BETTER if custom_move != top1 else L_ALSO_GOOD
 
             if custom_move:
-                prompt = f"""Ты опытный шахматный тренер. Игрок сделал ход и хочет понять его качество.
+                prompt = f"""**{L_MOVE_IDEA} {custom_move}:**
+{L_MOVE_IDEA_EXP}
 
-Позиция (FEN): {custom_fen}
-Ход: {custom_move} ({color_name})
+=== Stockfish ===
+{sb_fmt} → {sa_fmt} ({diff_fmt})
+{top1} / {top2} / {top3}
 
-=== Данные Stockfish ===
-Оценка ДО хода: {sb_fmt}
-Оценка ПОСЛЕ хода: {sa_fmt}
-Изменение оценки: {diff_fmt}
-Лучший ход: {top1}
-Второй лучший: {top2}
-Третий лучший: {top3}
+**{L_MOVE_QUAL}**
+{L_MOVE_QUAL_EXP}
 
-Дай полный разбор по разделам:
+**{L_TACTICS}**
+{L_TACTICS_EXP}
 
-**🎯 Идея хода {custom_move}:**
-Объясни что делает этот ход 2 предложениями — атака, защита, развитие фигуры, захват пространства, тактика?
+**{L_BEST_ALT}**
+{top1} — {alt_quality}. {L_BEST_ALT_EXP}
 
-**📊 Качество хода:**
-На основе изменения оценки Stockfish определи категорию (отличный ход / хороший / неточность / ошибка / грубая ошибка) и объясни почему 1-2 предложениями.
-
-**♟ Тактика и план:**
-Какие угрозы создаёт или снимает этот ход? Какой план он открывает или закрывает? объясни 1 предложением.
-
-**⚡ Лучшая альтернатива:**
-Объясни почему {top1} был бы {'лучше' if custom_move != top1 else 'тоже хорош'} — какую конкретную идею он реализует? объясни 2 предложением.
-
-**💡 Урок:**
-Один практический совет — что нужно помнить в похожих позициях? объясни 2 предложением."""
+**{L_LESSON}**
+{L_LESSON_EXP}"""
 
             else:
-                prompt = f"""Ты опытный шахматный тренер. Проанализируй позицию очень точно для игрока.
+                prompt = f"""**{L_POS_EVAL}**
+{L_POS_EVAL_D}
 
-Позиция (FEN): {custom_fen}
-Очередь хода: {color_name}
+=== Stockfish ===
+{sb_fmt} | {top1} / {top2} / {top3}
 
-=== Данные Stockfish ===
-Оценка позиции: {sb_fmt}
-Лучший ход: {top1}
-Второй лучший: {top2}
-Третий лучший: {top3}
+**{L_BEST_PLAN} {color_name}:**
+{top1} — {L_BEST_PLAN_D}
 
-Дай полный разбор:
+**{L_ALT_PLAN}**
+{top2} — {L_ALT_PLAN_D}
 
-**📍 Оценка позиции:**
-Кто стоит лучше, почему — материал, король, пешечная структура, активность фигур? объясни 2 предложением.
-
-**🎯 Лучший план для {color_name}:**
-Объясни идею хода {top1} — что он даёт, какую угрозу создаёт или проблему решает? объясни 1 предложением.
-
-**♟ Альтернативный план:**
-Коротко объясни идею {top2}.
-
-**⚠️ Чего избегать:**
-Какие ходы были бы ошибкой и почему?объясни 1 предложением"""
+**{L_AVOID}**
+{L_AVOID_D}"""
 
         # ── Режим просмотра партии ──
         else:
@@ -380,12 +377,11 @@ def analyze_move():
 
             if move_index is not None and 0 <= move_index < len(moves_san):
                 target = moves_san[move_index]
-                color = "Белые" if move_index % 2 == 0 else "Чёрные"
+                color = L_WHITE if move_index % 2 == 0 else L_BLACK
                 move_num = move_index // 2 + 1
                 context_before = " ".join(moves_san[max(0, move_index-4):move_index])
                 context_after = " ".join(moves_san[move_index+1:move_index+3])
 
-                # Восстанавливаем позицию ДО хода
                 board2 = game.board()
                 for i, mv in enumerate(move_objects):
                     if i == move_index:
@@ -406,77 +402,63 @@ def analyze_move():
                 sa_fmt = f"{sa/100:+.2f}" if sa is not None else "?"
                 diff = None
                 if sb is not None and sa is not None:
-                    diff = (sa - sb) if color == "Белые" else (sb - sa)
-                diff_fmt = f"{diff:+d} сантипешек" if diff is not None else "?"
+                    diff = (sa - sb) if color == L_WHITE else (sb - sa)
+                diff_fmt = f"{diff:+d} {L_CP}" if diff is not None else "?"
 
-                prompt = f"""Ты опытный шахматный тренер. Разбери конкретный ход из партии.
+                prompt = f"""{white} vs {black} ({result}) | {move_num}. {target} ({color})
+{context_before} → [{target}] → {context_after}
 
-Партия: {white} vs {black} (результат: {result})
-Ход {move_num}: {target} ({color})
-Позиция до хода (FEN): {fen_before}
-Ходы до: {context_before}
-Ходы после: {context_after}
+=== Stockfish ===
+{sb_fmt} → {sa_fmt} ({diff_fmt})
+{top1} / {top2} / {top3}
 
-=== Данные Stockfish ===
-Оценка ДО хода: {sb_fmt}
-Оценка ПОСЛЕ хода: {sa_fmt}
-Изменение оценки: {diff_fmt}
-Лучший ход Stockfish: {top1}
-Второй лучший: {top2}
-Третий лучший: {top3}
+**{L_MOVE_IDEA} {target}:**
+{L_MOVE_IDEA_D}
 
-Дай полный разбор по разделам:
+**{L_MOVE_QUAL}**
+{L_MOVE_QUAL_D}
 
-**🎯 Идея хода {target}:**
-Что делает этот ход — атака, защита, тактика, развитие, захват пространства?объясни кратко.
+**{L_TACTICS}**
+{L_TACTICS_D}
 
-**📊 Качество хода:**
-На основе изменения оценки определи категорию и объясни. Если это ошибка — почему игрок мог её допустить? объясни 1 предложением.
+**{L_BEST_ALT}**
+{top1} — {L_BEST_ALT_D}
 
-**♟ Тактика и план:**
-Какие угрозы создаёт или нейтрализует этот ход? Как он влияет на дальнейшую игру (на это указывают ходы после)? объясни 2 предложением.
-
-**⚡ Лучшая альтернатива:**
-Объясни идею хода {top1} — что конкретно он давал лучшего? объясни 1 предложением.
-
-**💡 Урок из этого момента:**
-Один практический вывод для игрока — что нужно помнить в похожих позициях? объясни 1 предложением."""
+**{L_LESSON_FULL}**
+{L_LESSON_D}"""
 
             else:
                 # Общий анализ партии
                 moves_str = " ".join([f"{i//2+1}.{m}" if i%2==0 else m for i,m in enumerate(moves_san)])
-                prompt = f"""Ты опытный шахматный тренер. Дай полный анализ партии.
+                prompt = f"""{white} vs {black} | {result}
+{moves_str}
 
-Партия: {white} vs {black}, результат: {result}
-Ходы: {moves_str}
+**{L_GAME_CHAR}**
+{L_GAME_CHAR_D}
 
-**🏁 Характер партии:**
-Открытая/закрытая, тактическая/позиционная, дебют? объясни 1 предложением.
+**{L_KEY_MOMENT}**
+{L_KEY_MOM_D}
 
-**📍 Ключевой момент:**
-Самый важный ход или позиция — где решилась партия? объясни 1 предложением.
+**{L_WHITE_ERR}**
+{L_WHITE_ERR_D}
 
-**❌ Ошибки белых:**
-Главные ошибки и почему они проигрышны. объясни 1 предложением.
+**{L_BLACK_ERR}**
+{L_BLACK_ERR_D}
 
-**❌ Ошибки чёрных:**
-Главные ошибки и почему они проигрышны. объясни 1 предложением.
-
-**🏆 Вывод:**
-Почему выиграл победитель — тактика, стратегия, ошибки соперника? объясни 1 предложением."""
+**{L_CONCLUSION}**
+{L_CONCLUSION_D}"""
 
         # Краткое резюме
         def get_quality_label(diff):
-            if diff is None: return "Позиция"
-            if diff <= -300: return "?? Грубая ошибка"
-            if diff <= -100: return "? Ошибка"
-            if diff <= -50:  return "?! Неточность"
-            if diff >= 200:  return "!! Блестящий ход"
-            if diff >= 50:   return "! Хороший ход"
-            if diff >= 20:   return "!? Интересный ход"
-            return "Нейтральный ход"
+            if diff is None: return "—"
+            if diff <= -300: return "?? Blunder" if language == "en" else ("?? Өрескел қате" if language == "kk" else "?? Грубая ошибка")
+            if diff <= -100: return "? Mistake"  if language == "en" else ("? Қате"         if language == "kk" else "? Ошибка")
+            if diff <= -50:  return "?! Inaccuracy" if language == "en" else ("?! Дәлсіздік" if language == "kk" else "?! Неточность")
+            if diff >= 200:  return "!! Brilliant" if language == "en" else ("!! Тамаша жүріс" if language == "kk" else "!! Блестящий ход")
+            if diff >= 50:   return "! Good"     if language == "en" else ("! Жақсы жүріс"   if language == "kk" else "! Хороший ход")
+            if diff >= 20:   return "!? Interesting" if language == "en" else ("!? Қызықты жүріс" if language == "kk" else "!? Интересный ход")
+            return "=" if language == "en" else ("= Бейтарап" if language == "kk" else "= Нейтральный")
 
-        # Вычисляем diff для резюме
         summary_diff = None
         summary_sb = None
         summary_sa = None
@@ -496,14 +478,13 @@ def analyze_move():
         sa_s = f"{summary_sa/100:+.2f}" if summary_sa is not None else "?"
         summary = f"{sb_s} → {sa_s}  ·  {quality}"
 
-        # добавляем языковую инструкцию в конец промпта
+        # Языковая инструкция в конец промпта
         lang_instruction = ""
         if language == "en":
             lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
         elif language == "kk":
-            lang_instruction = "\n\nОЛІ: Жауапты ТЕК қазақша беріңіз."
-        # иначе Russian по умолчанию
-        
+            lang_instruction = "\n\nМАЦЫЗДЫ: Жауапты ТЕК қазақша беріңіз."
+
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt + lang_instruction}],
             model="llama-3.3-70b-versatile",
@@ -518,7 +499,6 @@ def analyze_move():
 
 @app.route("/analyze_position", methods=["POST"])
 def analyze_position():
-    """Get top 2 moves for a given FEN position."""
     data = request.get_json()
     fen = data.get("fen", "")
     try:
@@ -546,16 +526,14 @@ def trainer():
 
 @app.route("/trainer_move", methods=["POST"])
 def trainer_move():
-    """Stockfish делает ход за тренера + ИИ объясняет оба хода."""
     data = request.get_json()
     fen = data.get("fen", "")
-    player_move = data.get("player_move", "")   # ход игрока (SAN) или "" если первый ход
-    level = data.get("level", "medium")          # novice / medium / master
+    player_move = data.get("player_move", "")
+    level = data.get("level", "medium")
     move_number = data.get("move_number", 1)
-    game_pgn = data.get("pgn", "")              # вся партия до этого момента
-    language = data.get("language", "ru")        # языковой параметр
+    game_pgn = data.get("pgn", "")
+    language = data.get("language", "ru")
 
-    # Skill levels для Stockfish
     skill_map = {"novice": 3, "medium": 10, "master": 18}
     depth_map  = {"novice": 5, "medium": 10, "master": 15}
     skill = skill_map.get(level, 10)
@@ -567,26 +545,21 @@ def trainer_move():
         if not sf_path:
             return jsonify({"error": "Stockfish не найден"}), 500
 
-        # Оценка позиции до хода тренера
         with chess.engine.SimpleEngine.popen_uci(sf_path) as engine:
             engine.configure({"Skill Level": skill})
 
-            # Оценка текущей позиции
             info_before = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=1)
             score_before = info_before[0]["score"].white().score(mate_score=10000) if isinstance(info_before, list) else info_before["score"].white().score(mate_score=10000)
 
-            # Ход тренера
             result = engine.play(board, chess.engine.Limit(depth=depth))
             trainer_mv = result.move
             trainer_san = board.san(trainer_mv)
 
             board.push(trainer_mv)
 
-            # Оценка после хода тренера
             info_after = engine.analyse(board, chess.engine.Limit(depth=8), multipv=1)
             score_after = info_after[0]["score"].white().score(mate_score=10000) if isinstance(info_after, list) else info_after["score"].white().score(mate_score=10000)
 
-            # Проверка на мат/конец игры
             game_over = board.is_game_over()
             game_over_reason = ""
             if board.is_checkmate():
@@ -596,37 +569,39 @@ def trainer_move():
             elif board.is_insufficient_material():
                 game_over_reason = "insufficient"
 
-        # Генерируем комментарий тренера через ИИ
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-        level_names = {"novice": "начинающий", "medium": "средний", "master": "продвинутый"}
-        level_name = level_names.get(level, "средний")
+        level_names = {
+            "ru": {"novice": "начинающий", "medium": "средний",       "master": "продвинутый"},
+            "en": {"novice": "beginner",   "medium": "intermediate",   "master": "advanced"},
+            "kk": {"novice": "жаңадан бастаушы", "medium": "орташа",  "master": "шебер"},
+        }
+        level_name = level_names.get(language, level_names["ru"]).get(level, "средний")
 
         player_block = ""
         if player_move:
-            player_block = f"\nИгрок только что сделал ход: {player_move}"
+            player_block = f"\nPlayer move: {player_move}" if language == "en" else (
+                f"\nОқушының жүрісі: {player_move}" if language == "kk" else
+                f"\nИгрок только что сделал ход: {player_move}"
+            )
 
-        prompt = f"""Ты шахматный тренер, играешь против ученика ({level_name} уровень).
-Ход номер {move_number} в партии.
-FEN до твоего хода: {fen}
-{player_block}
-Твой ход: {trainer_san}
-Оценка позиции до: {score_before/100 if score_before else 0:.2f}
-Оценка после твоего хода: {score_after/100 if score_after else 0:.2f}
+        prompt = f"""Chess trainer vs student ({level_name}).
+Move #{move_number}. FEN: {fen}{player_block}
+Trainer move: {trainer_san}
+Eval before: {score_before/100 if score_before else 0:.2f} | after: {score_after/100 if score_after else 0:.2f}
 
-Напиши короткий живой комментарий (2-3 предложения) КАК НАСТОЯЩИЙ ТРЕНЕР во время игры.
-Говори от первого лица ("Я делаю...", "Интересный ход...", "Хм...").
-{'Прокомментируй ход ученика и объясни свой ответный ход.' if player_move else 'Объясни свой первый ход и намерения.'}
-Будь живым, используй шахматные термины, иногда хвали или критикуй.
-Не используй markdown, только обычный текст."""
+Write a short lively comment (2-3 sentences) IN FIRST PERSON as a real coach during play.
+{'Comment on student move and explain your reply.' if player_move else 'Explain your first move.'}
+Use chess terms, be natural. No markdown."""
 
-        # добавляем языковую инструкцию в конец промпта
         lang_instruction = ""
         if language == "en":
             lang_instruction = "\n\nIMPORTANT: Answer ONLY in English."
         elif language == "kk":
-            lang_instruction = "\n\nОЛІ: Жауапты ТЕК қазақша беріңіз."
-        
+            lang_instruction = "\n\nМАЦЫЗДЫ: Жауапты ТЕК қазақша беріңіз."
+        else:
+            lang_instruction = "\n\nВАЖНО: Отвечай ТОЛЬКО на русском языке."
+
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt + lang_instruction}],
             model="llama-3.3-70b-versatile",
@@ -651,7 +626,6 @@ FEN до твоего хода: {fen}
 
 @app.route("/trainer_draw", methods=["POST"])
 def trainer_draw():
-    """Проверяет — примет ли тренер ничью (если после 20 ходов позиция ничейная)."""
     data = request.get_json()
     fen = data.get("fen", "")
     move_number = data.get("move_number", 0)
@@ -670,7 +644,6 @@ def trainer_draw():
             info = engine.analyse(board, chess.engine.Limit(time=0.3))
             score = info["score"].white().score(mate_score=10000) if not isinstance(info, list) else info[0]["score"].white().score(mate_score=10000)
 
-        # Принимаем ничью если оценка в диапазоне ±80 сантипешек
         accept = score is not None and abs(score) <= 80
 
         if accept:
@@ -687,9 +660,8 @@ def trainer_draw():
 
 @app.route("/trainer_pgn", methods=["POST"])
 def trainer_pgn():
-    """Генерирует PGN сыгранной партии с тренером."""
     data = request.get_json()
-    moves = data.get("moves", [])      # список SAN ходов
+    moves = data.get("moves", [])
     player_color = data.get("player_color", "white")
     level = data.get("level", "medium")
     result = data.get("result", "*")

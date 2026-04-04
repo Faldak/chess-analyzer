@@ -971,6 +971,7 @@ async function analyzeCurrentMove(){
   fetchMoveExplanation(pgnStore,curIdx>0?curIdx-1:null,null,null);
 }
 
+// ══ ИЗМЕНЕНА: добавлена передача prompt_labels с фронтенда ══
 async function fetchMoveExplanation(pgn,moveIndex,fen,moveSan){
   showACLoading();showMAcLoading();
   try{
@@ -979,10 +980,53 @@ async function fetchMoveExplanation(pgn,moveIndex,fen,moveSan){
     if(moveIndex!==null&&moveIndex!==undefined)body.move_index=moveIndex;
     if(fen)body.fen=fen;
     if(moveSan)body.move=moveSan;
-    // Pass current language and system prompt to backend
+
     const lang = window.i18n ? window.i18n.getCurrentLang() : 'ru';
     body.language = lang;
     body.system_prompt = T('ai.systemPrompt');
+
+    // Передаём все переведённые заголовки промптов на бэкенд
+    body.prompt_labels = {
+      gameChar:       T('prompts.gameChar'),
+      keyMoment:      T('prompts.keyMoment'),
+      whiteErrors:    T('prompts.whiteErrors'),
+      blackErrors:    T('prompts.blackErrors'),
+      conclusion:     T('prompts.conclusion'),
+      moveIdea:       T('prompts.moveIdea'),
+      moveQuality:    T('prompts.moveQuality'),
+      tactics:        T('prompts.tactics'),
+      bestAlt:        T('prompts.bestAlt'),
+      lesson:         T('prompts.lesson'),
+      lessonFull:     T('prompts.lessonFull'),
+      posEval:        T('prompts.posEval'),
+      bestPlan:       T('prompts.bestPlan'),
+      altPlan:        T('prompts.altPlan'),
+      avoid:          T('prompts.avoid'),
+      colorWhite:     T('prompts.colorWhite'),
+      colorBlack:     T('prompts.colorBlack'),
+      better:         T('prompts.better'),
+      alsoGood:       T('prompts.alsoGood'),
+      cpChange:       T('prompts.cpChange'),
+      gameCharDesc:   T('prompts.gameCharDesc'),
+      keyMomentDesc:  T('prompts.keyMomentDesc'),
+      whiteErrDesc:   T('prompts.whiteErrDesc'),
+      blackErrDesc:   T('prompts.blackErrDesc'),
+      conclusionDesc: T('prompts.conclusionDesc'),
+      moveIdeaDesc:   T('prompts.moveIdeaDesc'),
+      moveQualDesc:   T('prompts.moveQualDesc'),
+      tacticsDesc:    T('prompts.tacticsDesc'),
+      bestAltDesc:    T('prompts.bestAltDesc'),
+      lessonDesc:     T('prompts.lessonDesc'),
+      posEvalDesc:    T('prompts.posEvalDesc'),
+      bestPlanDesc:   T('prompts.bestPlanDesc'),
+      altPlanDesc:    T('prompts.altPlanDesc'),
+      avoidDesc:      T('prompts.avoidDesc'),
+      moveIdeaExpDesc:T('prompts.moveIdeaExpDesc'),
+      moveQualExpDesc:T('prompts.moveQualExpDesc'),
+      tacticsExpDesc: T('prompts.tacticsExpDesc'),
+      bestAltExpDesc: T('prompts.bestAltExpDesc'),
+      lessonExpDesc:  T('prompts.lessonExpDesc'),
+    };
 
     const res=await fetch('/analyze_move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
