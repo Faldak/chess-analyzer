@@ -981,7 +981,7 @@ async function fetchMoveExplanation(pgn,moveIndex,fen,moveSan){
     if(moveSan)body.move=moveSan;
     // Pass current language and system prompt to backend
     const lang = window.i18n ? window.i18n.getCurrentLang() : 'ru';
-    body.lang = lang;
+    body.language = lang;
     body.system_prompt = T('ai.systemPrompt');
 
     const res=await fetch('/analyze_move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
